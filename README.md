@@ -9,12 +9,12 @@ The demand for large-scale computational resources for Neural Architecture Searc
 **This repository contains code for the paper [Energy Consumption-Aware Tabular Benchmarks For NAS](google.com).**
 
 <p float="left">
-  <img src="images/scatter_5v.png" />
-  <img src="images/attainment_108.png" />
+  <img src="images/scatter_5v.png" width="445" height="325"" />
+  <img src="images/attainment_108.png" width="445" height="325" />
 </p>
 <p float="left">
-  <img src="images/moo_radar_108.png" />
-  <img src="images/so_radar_108.png" />
+  <img src="images/moo_radar_108.png" width="445" height="325" />
+  <img src="images/so_radar_108.png" width="445" height="325" />
 </p>
 
 ## Getting started
