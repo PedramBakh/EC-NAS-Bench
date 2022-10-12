@@ -3,12 +3,19 @@
 ![Activity](https://img.shields.io/github/last-commit/PedramBakh/ec-nas-bench)
 ![License](https://img.shields.io/github/license/PedramBakh/ec-nas-bench)
 
-
-
 ## Abstract
 The demand for large-scale computational resources for Neural Architecture Search (NAS) has been lessened by tabular benchmarks for NAS. Evaluating NAS strategies is now possible on extensive search spaces and at a moderate computational cost. But so far, NAS has mainly focused on maximising performance on some hold-out validation/test set. However, energy consumption is a partially conflicting objective that should not be neglected. We hypothesise that constraining NAS to include the energy consumption of training the models could reveal a subspace of undiscovered architectures that are more computationally efficient with a smaller carbon footprint. To support the hypothesis, an existing tabular benchmark for NAS is augmented with the energy consumption of each architecture. We then perform multi-objective optimisation that includes energy consumption as an additional objective. We demonstrate the usefulness of multi-objective NAS for uncovering the trade-off between performance and energy consumption as well as for finding more energy-efficient architectures. The updated tabular benchmark is open-sourced to encourage the further exploration of energy consumption-aware NAS.
 
 **This repository contains code for the paper [Energy Consumption-Aware Tabular Benchmarks For NAS](google.com).**
+
+<p float="left">
+  <img src="images/scatter_5v.png" width="500" height="375" />
+  <img src="images/attainment_108.png" width="500" height="375" />
+</p>
+<p float="left">
+  <img src="images/moo_radar_108.png" width="500" height="375" />
+  <img src="images/so_radar_108.png" width="500" height="375" />
+</p>
 
 ## Getting started
 To install the requirements, using Conda, run the following command:
@@ -93,6 +100,7 @@ plt.ylim(0.01, 1.4)
 plt.xlim(-0.95, -0.83)
 plt.savefig(f"front_{budget}.png", dpi=300, bbox_inches="tight")
 ```
+![front108](images/front_108.png)
 
 ## Citation
 Kindly use the following BibTeX entry if you use the code in your work.
