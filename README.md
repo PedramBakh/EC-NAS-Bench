@@ -34,7 +34,7 @@ $ pip install -r requirements.txt
 | EC-NAS-Bench | Image Classification | CIFAR-10 | 5V | 2632 | 10528 | Yes | Yes  
 | EC-NAS-Bench | Image Classification | CIFAR-10 | 4V | 91 | 364 | Yes | Yes
 
-It is also possible to use the MOO-algorithm with the original NAS-Bench-101 dataset, which can be downloaded using `ecnas/utils/get_bencmarks.py`.
+It is also possible to use the MOO algorithm with the original NAS-Bench-101 dataset, which can be downloaded using `ecnas/utils/get_bencmarks.py`.
 
 ## Example usage
 The following code initializes the EC-Nas-Bench with the 5V space, runs the MOO algorithm for validation accuracy and energy consumption, and returns the set of Pareto-efficient solutions.
@@ -84,7 +84,7 @@ angles = metrics.get_bend_angles(x, y)
 idx = np.argmin(angles)
 knee_x, knee_y = x[idx], y[idx]
 
-# Get metrics for conveniance
+# Get metrics for convenience
 df = metrics.get_dataframe(ndom_archs, nb5v, budget)
 
 # Plot pareto front
