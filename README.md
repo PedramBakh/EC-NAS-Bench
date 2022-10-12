@@ -13,8 +13,8 @@ The demand for large-scale computational resources for Neural Architecture Searc
   <img src="images/attainment_108.png" width="410" height="300" />
 </p>
 <p float="left">
-  <img src="images/moo_radar_108.png" width="410" height="300" />
-  <img src="images/so_radar_108.png" width="410" height="300" />
+  <img src="images/moo_radar_108.png" width="410" height="350" />
+  <img src="images/so_radar_108.png" width="410" height="350" />
 </p>
 
 ## Getting started
@@ -100,7 +100,9 @@ plt.ylim(0.01, 1.4)
 plt.xlim(-0.95, -0.83)
 plt.savefig(f"front_{budget}.png", dpi=300, bbox_inches="tight")
 ```
-![front108](images/front_108.png)
+<p float="left">
+  <img src="images/front_108.png" width="410" height="300" />
+</p>
 
 ## Citation
 Kindly use the following BibTeX entry if you use the code in your work.
