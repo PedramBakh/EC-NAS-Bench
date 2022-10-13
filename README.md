@@ -6,7 +6,7 @@
 ## Abstract
 The demand for large-scale computational resources for Neural Architecture Search (NAS) has been lessened by tabular benchmarks for NAS. Evaluating NAS strategies is now possible on extensive search spaces and at a moderate computational cost. But so far, NAS has mainly focused on maximising performance on some hold-out validation/test set. However, energy consumption is a partially conflicting objective that should not be neglected. We hypothesise that constraining NAS to include the energy consumption of training the models could reveal a subspace of undiscovered architectures that are more computationally efficient with a smaller carbon footprint. To support the hypothesis, an existing tabular benchmark for NAS is augmented with the energy consumption of each architecture. We then perform multi-objective optimisation (MOO) that includes energy consumption as an additional objective. We demonstrate the usefulness of multi-objective NAS for uncovering the trade-off between performance and energy consumption as well as for finding more energy-efficient architectures. The updated tabular benchmark is open-sourced to encourage the further exploration of energy consumption-aware NAS.
 
-**This repository contains code for the paper [Energy Consumption-Aware Tabular Benchmarks For NAS](google.com).**
+**This repository contains code for the paper [Energy Consumption-Aware Tabular Benchmarks For NAS](https://arxiv.org/abs/2210.06015).**
 
 <p float="left">
   <img src="images/scatter_5v.png" width="410" height="300"" />
@@ -107,5 +107,9 @@ plt.savefig(f"front_{budget}.png", dpi=300, bbox_inches="tight")
 ## Citation
 Kindly use the following BibTeX entry if you use the code in your work.
 ```
-TBA
+@article{bakhtiarifard2022ecnasbench,
+ 	title={Energy Consumption-Aware Tabular Benchmarks for Neural Architecture Search},
+	author={Pedram Bakhtiarifard and Christian Igel and Raghavendra Selvan},
+ 	journal={arXiv preprint arXiv:2022.2210.06015},
+	year={2022}}
 ```
