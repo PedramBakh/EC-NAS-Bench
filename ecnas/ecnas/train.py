@@ -8,7 +8,7 @@ plt.rcParams["text.usetex"] = True
 
 # Path to tfrecord
 # Initialize benchmark
-fn_5v = "/home/raghav/dsl/projects/EC-NAS-Bench/ecnas/ecnas/utils/data/tabular_benchmarks/energy_5V9E_estimate.tfrecord"
+fn_5v = "/path/to/ecnas/ecnas/utils/data/tabular_benchmarks/energy_5V9E_estimate.tfrecord"
 nb5v = nasbench101.ECNASBench(fn_5v)
 
 # Define some objectives functions (accessed pre-saved training statistics of trained architectures)
