@@ -90,7 +90,10 @@ radar.fill(df.iloc[idx].values.tolist(), alpha=0.4, color=yellow)
 
 plt.savefig("radar.pdf", dpi=300, bbox_inches="tight")
 
+plt.clf()
 df_so = metrics.get_dataframe(so_arch, nb5v, budget)
+fig = plt.figure(figsize=latex.get_size_iclr2023())
+radar = ComplexRadar(fig, df.columns, ranges, n_ring_levels=5, show_scales=True, format_cfg=format_cfg)
 
 radar.plot(df_so.iloc[0].values.tolist(), color=red, linewidth=0.8)
 radar.fill(df_so.iloc[0].values.tolist(), alpha=0.4, color=red)
