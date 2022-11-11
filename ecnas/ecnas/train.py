@@ -22,6 +22,10 @@ budget = 108
 pop_size = 20
 iter = int(1e2)
 ref_point = [1, 1e8]
+seed = 42
+
+# Instantiate MOO algorithm
+moo = MOO(benchmark=nb5v,seed=seed)
 
 # Run MOO and return the pareto-efficient solutions (pareto_sol), 
 # and the corresponding architectures with additional information (pareto_archs)
