@@ -1,0 +1,141 @@
+// Metrics stored per evaluation of each ModelSpec.
+// NOTE: this file is for reference only, changes to this file will not affect
+// the code unless you compile the proto using protoc, which can be installed
+// from https://github.com/protocolbuffers/protobuf/releases.
+syntax = "proto2";
+
+package nasbench;
+
+message ModelMetricsEnergy {
+  // Metrics that are evaluated at each checkpoint. Each ModelMetrics will
+  // contain multiple EvaluationData messages evaluated at various points during
+  // training, including the initialization before any steps are taken.
+  repeated EvaluationDataEnergy evaluation_data_energy = 1;
+
+  // Other fixed metrics (does not change over training) go here.
+
+  // Parameter count of all trainable variables.
+  optional int32 trainable_parameters = 2;
+
+  // Total time for all training and evaluation (mostly used for diagnostic
+  // purposes).
+  optional double total_time = 3;
+
+  // Total energy (kWh) consumption
+  optional double total_energy = 4;
+
+  // Total co2eq (g)
+  optional double total_co2eq = 5;
+
+  // Starting time of emission tracking
+  optional string start_emission = 6;
+
+  // Stopping time of emission tracking
+  optional string stop_emission = 7;
+
+  // Average carbon intensity during training
+  optional double overall_avg_intensity = 8;
+
+  // Average power usages for devices (cpu/gpu)
+  optional PowerUsageData avg_power_usages = 9;
+}
+
+message EvaluationDataEnergy {
+  // Current epoch at the time of this evaluation.
+  optional double current_epoch = 1;
+
+  // Training time in seconds up to this point. Does not include evaluation
+  // time.
+  optional double training_time = 2;
+
+  // Accuracy on a fixed 10,000 images from the train set.
+  optional double train_accuracy = 3;
+
+  // Accuracy on a held-out validation set of 10,000 images.
+  optional double validation_accuracy = 4;
+
+  // Accuracy on the test set of 10,000 images.
+  optional double test_accuracy = 5;
+
+  // Energy consumption
+  optional double energy = 6;
+
+  // CO2 eq. of energy consumption
+  optional double co2eq = 7;
+
+  // Average carbon intensity during training
+  optional double avg_intensity = 8;
+
+  // Starting time of emission tracking
+  optional string start_emission = 9;
+
+  // Stopping time of emission tracking
+  optional string stop_emission = 10;
+
+  // Predicted energy consumption
+  optional double pred_energy = 11;
+
+  // Predicted CO2 eq. of energy consumption
+  optional double pred_co2eq = 12;
+
+  // Predicted training time
+  optional double pred_training_time = 13;
+
+  // Predicted average carbon intensity
+  optional double pred_avg_intensity = 14;
+
+  // Location of checkpoint file. Note: checkpoint_path will look like
+  // /path/to/model_dir/model.ckpt-1234 but the actual checkpoint files may have
+  // an extra ".data", ".index", ".meta" suffix. For purposes of loading a
+  // checkpoint file in TensorFlow, the path without the suffix is sufficient.
+  // This field may be left blank because the checkpoint can be programmatically
+  // generated from the model specifications.
+  optional string checkpoint_path = 15;
+
+  // Additional sample metrics like gradient norms and covariance are too large
+  // to store in file, so they need to be queried along with the checkpoints
+  // from GCS directly.
+
+}
+
+message PowerUsageData {
+    // Data
+    optional GPU gpu = 1;
+
+    optional CPU cpu = 2;
+}
+
+message GPU {
+    // Average power usage (W)
+    repeated UsageW avg_power_usages_w = 1;
+
+    // Average power usage (J)
+    repeated UsageJ avg_power_usages_j = 2;
+
+    // Device names
+    repeated Device devices = 3;
+}
+
+message CPU {
+    // Average power usage (W)
+    repeated UsageW avg_power_usages_w = 1;
+
+    // Average power usage (J)
+    repeated UsageJ avg_power_usages_j = 2;
+
+    // Device names
+    repeated Device devices = 3;
+}
+
+message Device {
+    // Name of device
+    optional string name = 1;
+}
+
+message UsageW {
+    optional double avg_power_usage = 1;
+}
+
+message UsageJ {
+    optional double avg_power_usage = 1;
+}
