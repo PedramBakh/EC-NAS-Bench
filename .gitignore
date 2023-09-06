@@ -33,3 +33,6 @@ coverage.xml
 
 # Sphinx documentation
 docs/_build/
+
+# Large data files (tracked with Git LFS)
+# ecnas/ecnas/utils/data/tabular_benchmarks/energy_7V9E_surrogate.tfrecord
