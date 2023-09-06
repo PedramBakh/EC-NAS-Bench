@@ -3,6 +3,8 @@
 ![Activity](https://img.shields.io/github/last-commit/PedramBakh/ec-nas-bench)
 ![License](https://img.shields.io/github/license/PedramBakh/ec-nas-bench)
 
+**N.B.:** _In the updated paper for 2023, the experimental framework has been streamlined to be similar to [Multi-Obj-Baselines](https://github.com/automl/multi-obj-baselines). The "MOO" algorithm referred to in the examples below is now denoted as "SEMOA" (Simple Evolutionary Multi-Objective Algorithm). Additionally, the repository has been enriched with subspace benchmarks that include evaluations on different hardware configurations._
+
 ## Abstract
 The demand for large-scale computational resources for Neural Architecture Search (NAS) has been lessened by tabular benchmarks for NAS. Evaluating NAS strategies is now possible on extensive search spaces and at a moderate computational cost. But so far, NAS has mainly focused on maximising performance on some hold-out validation/test set. However, energy consumption is a partially conflicting objective that should not be neglected. We hypothesise that constraining NAS to include the energy consumption of training the models could reveal a subspace of undiscovered architectures that are more computationally efficient with a smaller carbon footprint. To support the hypothesis, an existing tabular benchmark for NAS is augmented with the energy consumption of each architecture. We then perform multi-objective optimisation (MOO) that includes energy consumption as an additional objective. We demonstrate the usefulness of multi-objective NAS for uncovering the trade-off between performance and energy consumption as well as for finding more energy-efficient architectures. The updated tabular benchmark is open-sourced to encourage the further exploration of energy consumption-aware NAS.
 
@@ -29,12 +31,26 @@ $ pip install -r requirements.txt
 ```
 
 ## Benchmarks
-| Benchmark | Description | Dataset | Space | No. Architectures | Datapoints | Surrogate | Included
-| --- | --- | --- | --- | --- | --- | --- | --- |
-| EC-NAS-Bench | Image Classification | CIFAR-10 | 5V | 2632 | 10528 | Yes | Yes  
-| EC-NAS-Bench | Image Classification | CIFAR-10 | 4V | 91 | 364 | Yes | Yes
 
-It is also possible to use the MOO algorithm with the original NAS-Bench-101 dataset, which can be downloaded using `ecnas/utils/get_bencmarks.py`.
+| Benchmark | Description | Dataset | Space | Hardware | No. Architectures | Datapoints | Surrogate Type |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| **Surrogate Benchmarks** | | | | | | | |
+| `energy_7V9E_surrogate.tfrecord` | Image Classification | CIFAR-10 | 7V | NVIDIA Quadro RTX 6000 | 423K | 1.6M | MLP |
+| `energy_5V9E_linscale.tfrecord` | Image Classification | CIFAR-10 | 5V | NVIDIA Quadro RTX 6000 | 2632 | 10528 | Linear Scaling |
+| `energy_4V9E_linscale.tfrecord` | Image Classification | CIFAR-10 | 4V | NVIDIA Quadro RTX 6000 | 91 | 364 | Linear Scaling |
+| **Non-Surrogate Benchmarks (4 Epochs)** | | | | | | | |
+| `energy_7V9E_4epochs.tfrecord` | Image Classification | CIFAR-10 | 7V | NVIDIA Quadro RTX 6000 | 4877 | 19508 | No |
+| `energy_5V9E_4epochs.tfrecord` | Image Classification | CIFAR-10 | 5V | NVIDIA Quadro RTX 6000 | 2632 | 2632 | No |
+| `energy_4V9E_4epochs.tfrecord` | Image Classification | CIFAR-10 | 4V | NVIDIA Quadro RTX 6000 | 91 | 91 | No |
+| **Hardware-Specific Benchmarks** | | | | | | | |
+| `energy_4V9E_quadrortx6000.tfrecord` | Image Classification | CIFAR-10 | 4V | NVIDIA Quadro RTX 6000 | 91 | 91 | No |
+| `energy_4V9E_rtx3060.tfrecord` | Image Classification | CIFAR-10 | 4V | NVIDIA RTX 3060 | 91 | 91 | No |
+| `energy_4V9E_rtx3090.tfrecord` | Image Classification | CIFAR-10 | 4V | NVIDIA RTX 3090 | 91 | 91 | No |
+| `energy_4V9E_titanxp.tfrecord` | Image Classification | CIFAR-10 | 4V | NVIDIA Titan Xp | 91 | 91 | No |
+
+
+
+It is also possible to use MOO algorithm with the original NAS-Bench-101 dataset, which can be downloaded using `ecnas/utils/get_bencmarks.py`.
 
 ## Example usage
 The following code initializes the EC-Nas-Bench with the 5V space, runs the MOO algorithm for validation accuracy and energy consumption, and returns the set of Pareto-efficient solutions.
@@ -111,9 +127,9 @@ plt.savefig(f"front_{budget}.png", dpi=300, bbox_inches="tight")
 ## Citation
 Kindly use the following BibTeX entry if you use the code in your work.
 ```
-@article{bakhtiarifard2022ecnasbench,
+@article{bakhtiarifard2023ecnasbench,
  	title={Energy Consumption-Aware Tabular Benchmarks for Neural Architecture Search},
 	author={Pedram Bakhtiarifard and Christian Igel and Raghavendra Selvan},
- 	journal={arXiv preprint arXiv:2022.2210.06015},
-	year={2022}}
+ 	journal={arXiv preprint arXiv:2023.2210.06015},
+	year={2023}}
 ```
