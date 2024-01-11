@@ -15,34 +15,44 @@ from hpbandster.core.base_config_generator import base_config_generator
 
 
 class ParEGO(base_config_generator):
-    def __init__(self, configspace, history_dir=None, run_id=None, min_points_in_model=None,
-                 top_n_percent=10, num_samples=24, random_fraction=1 / 20,
-                 bandwidth_factor=3, min_bandwidth=1e-3, rho=0.05,
-                 **kwargs):
+    def __init__(
+        self,
+        configspace,
+        history_dir=None,
+        run_id=None,
+        min_points_in_model=None,
+        top_n_percent=10,
+        num_samples=24,
+        random_fraction=1 / 20,
+        bandwidth_factor=3,
+        min_bandwidth=1e-3,
+        rho=0.05,
+        **kwargs
+    ):
         """
-            Fits for each given budget a kernel density estimator on the best N percent of the
-            evaluated configurations on this budget.
+        Fits for each given budget a kernel density estimator on the best N percent of the
+        evaluated configurations on this budget.
 
 
-            Parameters:
-            -----------
-            configspace: ConfigSpace
-                Configuration space object
-            top_n_percent: int
-                Determines the percentile of configurations that will be used as training data
-                for the kernel density estimator, e.g if set to 10 the 10% best configurations will be considered
-                for training.
-            min_points_in_model: int
-                minimum number of datapoints needed to fit a model
-            num_samples: int
-                number of samples drawn to optimize EI via sampling
-            random_fraction: float
-                fraction of random configurations returned
-            bandwidth_factor: float
-                widens the bandwidth for contiuous parameters for proposed points to optimize EI
-            min_bandwidth: float
-                to keep diversity, even when all (good) samples have the same value for one of the parameters,
-                a minimum bandwidth (Default: 1e-3) is used instead of zero.
+        Parameters:
+        -----------
+        configspace: ConfigSpace
+            Configuration space object
+        top_n_percent: int
+            Determines the percentile of configurations that will be used as training data
+            for the kernel density estimator, e.g if set to 10 the 10% best configurations will be considered
+            for training.
+        min_points_in_model: int
+            minimum number of datapoints needed to fit a model
+        num_samples: int
+            number of samples drawn to optimize EI via sampling
+        random_fraction: float
+            fraction of random configurations returned
+        bandwidth_factor: float
+            widens the bandwidth for contiuous parameters for proposed points to optimize EI
+        min_bandwidth: float
+            to keep diversity, even when all (good) samples have the same value for one of the parameters,
+            a minimum bandwidth (Default: 1e-3) is used instead of zero.
 
         """
         super().__init__(**kwargs)
@@ -58,8 +68,10 @@ class ParEGO(base_config_generator):
             self.min_points_in_model = len(self.configspace.get_hyperparameters()) + 1
 
         if self.min_points_in_model < len(self.configspace.get_hyperparameters()) + 1:
-            self.logger.warning('Invalid min_points_in_model value. Setting it to %i' % (
-                        len(self.configspace.get_hyperparameters()) + 1))
+            self.logger.warning(
+                "Invalid min_points_in_model value. Setting it to %i"
+                % (len(self.configspace.get_hyperparameters()) + 1)
+            )
             self.min_points_in_model = len(self.configspace.get_hyperparameters()) + 1
 
         self.num_samples = num_samples
@@ -71,16 +83,17 @@ class ParEGO(base_config_generator):
         self.vartypes = []
 
         for h in hps:
-            if hasattr(h, 'sequence'):
+            if hasattr(h, "sequence"):
                 raise RuntimeError(
-                    'This version on BOHB does not support ordinal hyperparameters. Please encode %s as an integer parameter!' % (
-                        h.name))
+                    "This version on BOHB does not support ordinal hyperparameters. Please encode %s as an integer parameter!"
+                    % (h.name)
+                )
 
-            if hasattr(h, 'choices'):
-                self.kde_vartypes += 'u'
+            if hasattr(h, "choices"):
+                self.kde_vartypes += "u"
                 self.vartypes += [len(h.choices)]
             else:
-                self.kde_vartypes += 'c'
+                self.kde_vartypes += "c"
                 self.vartypes += [0]
 
         self.vartypes = np.array(self.vartypes, dtype=int)
@@ -97,27 +110,27 @@ class ParEGO(base_config_generator):
 
     def largest_budget_with_model(self):
         if len(self.kde_models) == 0:
-            return (-float('inf'))
-        return (max(self.kde_models.keys()))
+            return -float("inf")
+        return max(self.kde_models.keys())
 
     def get_config(self, budget):
         """
-            Function to sample a new configuration
+        Function to sample a new configuration
 
-            This function is called inside Hyperband to query a new configuration
+        This function is called inside Hyperband to query a new configuration
 
 
-            Parameters:
-            -----------
-            budget: float
-                the budget for which this configuration is scheduled
+        Parameters:
+        -----------
+        budget: float
+            the budget for which this configuration is scheduled
 
-            returns: config
-                should return a valid configuration
+        returns: config
+            should return a valid configuration
 
         """
 
-        self.logger.debug('start sampling a new configuration.')
+        self.logger.debug("start sampling a new configuration.")
 
         sample = None
         info_dict = {}
@@ -126,24 +139,23 @@ class ParEGO(base_config_generator):
         # also mix in a fraction of random configs
         if len(self.kde_models.keys()) == 0 or np.random.rand() < self.random_fraction:
             sample = self.configspace.sample_configuration()
-            info_dict['model_based_pick'] = False
+            info_dict["model_based_pick"] = False
 
         best = np.inf
         best_vector = None
 
         if sample is None:
             try:
-
                 # sample from largest budget
                 budget = max(self.kde_models.keys())
 
-                l = self.kde_models[budget]['good'].pdf
-                g = self.kde_models[budget]['bad'].pdf
+                l = self.kde_models[budget]["good"].pdf
+                g = self.kde_models[budget]["bad"].pdf
 
                 minimize_me = lambda x: max(1e-32, g(x)) / max(l(x), 1e-32)
 
-                kde_good = self.kde_models[budget]['good']
-                kde_bad = self.kde_models[budget]['bad']
+                kde_good = self.kde_models[budget]["good"]
+                kde_bad = self.kde_models[budget]["bad"]
 
                 for i in range(self.num_samples):
                     idx = np.random.randint(0, len(kde_good.data))
@@ -151,7 +163,6 @@ class ParEGO(base_config_generator):
                     vector = []
 
                     for m, bw, t in zip(datum, kde_good.bw, self.vartypes):
-
                         bw = max(bw, self.min_bandwidth)
                         if t == 0:
                             bw = self.bw_factor * bw
@@ -159,11 +170,11 @@ class ParEGO(base_config_generator):
                                 vector.append(sps.truncnorm.rvs(-m / bw, (1 - m) / bw, loc=m, scale=bw))
                             except:
                                 self.logger.warning(
-                                    "Truncated Normal failed for:\ndatum=%s\nbandwidth=%s\nfor entry with value %s" % (
-                                    datum, kde_good.bw, m))
+                                    "Truncated Normal failed for:\ndatum=%s\nbandwidth=%s\nfor entry with value %s"
+                                    % (datum, kde_good.bw, m)
+                                )
                                 self.logger.warning("data in the KDE:\n%s" % kde_good.data)
                         else:
-
                             if np.random.rand() < (1 - bw):
                                 vector.append(int(m))
                             else:
@@ -171,7 +182,7 @@ class ParEGO(base_config_generator):
                     val = minimize_me(vector)
 
                     if not np.isfinite(val):
-                        self.logger.warning('sampled vector: %s has EI value %s' % (vector, val))
+                        self.logger.warning("sampled vector: %s has EI value %s" % (vector, val))
                         self.logger.warning("data in the KDEs:\n%s\n%s" % (kde_good.data, kde_bad.data))
                         self.logger.warning("bandwidth of the KDEs:\n%s\n%s" % (kde_good.bw, kde_bad.bw))
                         self.logger.warning("l(x) = %s" % (l(vector)))
@@ -190,66 +201,64 @@ class ParEGO(base_config_generator):
 
                 if best_vector is None:
                     self.logger.debug(
-                        "Sampling based optimization with %i samples failed -> using random configuration" % self.num_samples)
+                        "Sampling based optimization with %i samples failed -> using random configuration"
+                        % self.num_samples
+                    )
                     sample = self.configspace.sample_configuration().get_dictionary()
-                    info_dict['model_based_pick'] = False
+                    info_dict["model_based_pick"] = False
                 else:
                     self.logger.debug(
-                        'best_vector: {}, {}, {}, {}'.format(best_vector, best, l(best_vector), g(best_vector)))
+                        "best_vector: {}, {}, {}, {}".format(best_vector, best, l(best_vector), g(best_vector))
+                    )
                     for i, hp_value in enumerate(best_vector):
                         if isinstance(
-                                self.configspace.get_hyperparameter(
-                                    self.configspace.get_hyperparameter_by_idx(i)
-                                ),
-                                ConfigSpace.hyperparameters.CategoricalHyperparameter
+                            self.configspace.get_hyperparameter(self.configspace.get_hyperparameter_by_idx(i)),
+                            ConfigSpace.hyperparameters.CategoricalHyperparameter,
                         ):
                             best_vector[i] = int(np.rint(best_vector[i]))
                     sample = ConfigSpace.Configuration(self.configspace, vector=best_vector).get_dictionary()
 
                     try:
                         sample = ConfigSpace.util.deactivate_inactive_hyperparameters(
-                            configuration_space=self.configspace,
-                            configuration=sample
+                            configuration_space=self.configspace, configuration=sample
                         )
-                        info_dict['model_based_pick'] = True
+                        info_dict["model_based_pick"] = True
 
                     except Exception as e:
-                        self.logger.warning(("=" * 50 + "\n") * 3 + \
-                                            "Error converting configuration:\n%s" % sample + \
-                                            "\n here is a traceback:" + \
-                                            traceback.format_exc())
+                        self.logger.warning(
+                            ("=" * 50 + "\n") * 3
+                            + "Error converting configuration:\n%s" % sample
+                            + "\n here is a traceback:"
+                            + traceback.format_exc()
+                        )
                         raise (e)
 
             except:
                 self.logger.warning(
-                    "Sampling based optimization with %i samples failed\n %s \nUsing random configuration" % (
-                    self.num_samples, traceback.format_exc()))
+                    "Sampling based optimization with %i samples failed\n %s \nUsing random configuration"
+                    % (self.num_samples, traceback.format_exc())
+                )
                 sample = self.configspace.sample_configuration()
-                info_dict['model_based_pick'] = False
+                info_dict["model_based_pick"] = False
 
         try:
             sample = ConfigSpace.util.deactivate_inactive_hyperparameters(
-                configuration_space=self.configspace,
-                configuration=sample.get_dictionary()
+                configuration_space=self.configspace, configuration=sample.get_dictionary()
             ).get_dictionary()
         except Exception as e:
-            self.logger.warning("Error (%s) converting configuration: %s -> "
-                                "using random configuration!",
-                                e,
-                                sample)
+            self.logger.warning("Error (%s) converting configuration: %s -> " "using random configuration!", e, sample)
             sample = self.configspace.sample_configuration().get_dictionary()
-        self.logger.debug('done sampling a new configuration.')
+        self.logger.debug("done sampling a new configuration.")
         return sample, info_dict
 
     def impute_conditional_data(self, array):
-
         return_array = np.empty_like(array)
 
         for i in range(array.shape[0]):
             datum = np.copy(array[i])
             nan_indices = np.argwhere(np.isnan(datum)).flatten()
 
-            while (np.any(nan_indices)):
+            while np.any(nan_indices):
                 nan_idx = nan_indices[0]
                 valid_indices = np.argwhere(np.isfinite(array[:, nan_idx])).flatten()
 
@@ -268,7 +277,7 @@ class ParEGO(base_config_generator):
 
                 nan_indices = np.argwhere(np.isnan(datum)).flatten()
             return_array[i, :] = datum
-        return (return_array)
+        return return_array
 
     def parEG0_scalarization(self, cost):
         w = np.random.random_sample(2)
@@ -281,18 +290,18 @@ class ParEGO(base_config_generator):
 
     def new_result(self, job, update_model=True):
         """
-            function to register finished runs
+        function to register finished runs
 
-            Every time a run has finished, this function should be called
-            to register it with the result logger. If overwritten, make
-            sure to call this method from the base class to ensure proper
-            logging.
+        Every time a run has finished, this function should be called
+        to register it with the result logger. If overwritten, make
+        sure to call this method from the base class to ensure proper
+        logging.
 
 
-            Parameters:
-            -----------
-            job: hpbandster.distributed.dispatcher.Job object
-                contains all the info about the run
+        Parameters:
+        -----------
+        job: hpbandster.distributed.dispatcher.Job object
+            contains all the info about the run
         """
 
         super().new_result(job)
@@ -316,11 +325,15 @@ class ParEGO(base_config_generator):
             self.losses[budget] = []
 
         conf = ConfigSpace.Configuration(self.configspace, job.kwargs["config"])
-        record = {'Trial': len(self.history), 'Config': conf, 'Error': job.result['info']['acc_err'],
-                  'norm_params': job.result['info']['norm_params'],
-                  'Params': job.result['info']['params'],
-                  'f': loss,
-                  'budget': budget}
+        record = {
+            "Trial": len(self.history),
+            "Config": conf,
+            "Error": job.result["info"]["acc_err"],
+            "norm_params": job.result["info"]["norm_params"],
+            "Params": job.result["info"]["params"],
+            "f": loss,
+            "budget": budget,
+        }
         self.history.append(record)
         self.write()
 
@@ -332,13 +345,15 @@ class ParEGO(base_config_generator):
         self.losses[budget].append(loss)
 
         # skip model building:
-        #		a) if not enough points are available
+        # 		a) if not enough points are available
         if len(self.configs[budget]) <= self.min_points_in_model - 1:
-            self.logger.debug("Only %i run(s) for budget %f available, need more than %s -> can't build model!" % (
-            len(self.configs[budget]), budget, self.min_points_in_model + 1))
+            self.logger.debug(
+                "Only %i run(s) for budget %f available, need more than %s -> can't build model!"
+                % (len(self.configs[budget]), budget, self.min_points_in_model + 1)
+            )
             return
 
-        #		b) during warnm starting when we feed previous results in and only update once
+        # 		b) during warnm starting when we feed previous results in and only update once
         if not update_model:
             return
 
@@ -355,7 +370,7 @@ class ParEGO(base_config_generator):
         idx = np.argsort(train_losses)
 
         train_data_good = self.impute_conditional_data(train_configs[idx[:n_good]])
-        train_data_bad = self.impute_conditional_data(train_configs[idx[n_good:n_good + n_bad]])
+        train_data_bad = self.impute_conditional_data(train_configs[idx[n_good : n_good + n_bad]])
 
         if train_data_good.shape[0] <= train_data_good.shape[1]:
             return
@@ -366,7 +381,7 @@ class ParEGO(base_config_generator):
         # bw_estimation = 'cv_ls'
 
         # quick rule of thumb
-        bw_estimation = 'normal_reference'
+        bw_estimation = "normal_reference"
 
         bad_kde = sm.nonparametric.KDEMultivariate(data=train_data_bad, var_type=self.kde_vartypes, bw=bw_estimation)
         good_kde = sm.nonparametric.KDEMultivariate(data=train_data_good, var_type=self.kde_vartypes, bw=bw_estimation)
@@ -374,17 +389,13 @@ class ParEGO(base_config_generator):
         bad_kde.bw = np.clip(bad_kde.bw, self.min_bandwidth, None)
         good_kde.bw = np.clip(good_kde.bw, self.min_bandwidth, None)
 
-        self.kde_models[budget] = {
-            'good': good_kde,
-            'bad': bad_kde
-        }
+        self.kde_models[budget] = {"good": good_kde, "bad": bad_kde}
 
     def write(self):
         self.currently_writting = True
         keys = self.history[0].keys()
-        with open(self.history_dir + r'/hist_seed' + str(self.run_id) + ".csv", 'w', newline='') as csv_file:
+        with open(self.history_dir + r"/hist_seed" + str(self.run_id) + ".csv", "w", newline="") as csv_file:
             dict_writer = csv.DictWriter(csv_file, keys)
             dict_writer.writeheader()
             dict_writer.writerows(self.history)
         self.currently_writting = False
-

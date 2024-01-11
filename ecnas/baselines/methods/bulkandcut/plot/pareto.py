@@ -17,13 +17,14 @@ from baselines.methods.bulkandcut import rng
 Benchmark = namedtuple("Benchmark", ["name", "data", "plot_front", "marker", "color"])
 
 fig_h = 6.2  # 6.2 inches - the default Libre-office slide height
-fig_w = fig_h * 16. / 9.  # widescreen aspect ratio (16:9)
+fig_w = fig_h * 16.0 / 9.0  # widescreen aspect ratio (16:9)
 
 
-def generate_pareto_animation(working_dir: str,
-                              ref_point: Tuple[float],
-                              benchmarks: List[Benchmark] = None,
-                              ):
+def generate_pareto_animation(
+    working_dir: str,
+    ref_point: Tuple[float],
+    benchmarks: List[Benchmark] = None,
+):
     # Create output directory
     figures_dir = os.path.join(working_dir, "pareto")
     if os.path.exists(figures_dir):
@@ -37,15 +38,15 @@ def generate_pareto_animation(working_dir: str,
     start_time = population[0]["birth"]
     the_time = {
         "now": 0,
-        "bulkup": (population[first_bulkup]["birth"] - start_time).seconds / 3600.,
-        "slimdown": (population[first_slimdown]["birth"] - start_time).seconds / 3600.,
-        "end": (population[-1]["birth"] - start_time).seconds / 3600.,
-        }
+        "bulkup": (population[first_bulkup]["birth"] - start_time).seconds / 3600.0,
+        "slimdown": (population[first_slimdown]["birth"] - start_time).seconds / 3600.0,
+        "end": (population[-1]["birth"] - start_time).seconds / 3600.0,
+    }
 
     for i in range(pop_size + 1):
         print(f"Generating frame {i} of {pop_size}")
         frame_path = os.path.join(figures_dir, str(i).rjust(4, "0") + ".png")
-        the_time["now"] = (population[max(0, i-1)]["birth"] - start_time).seconds / 3600.
+        the_time["now"] = (population[max(0, i - 1)]["birth"] - start_time).seconds / 3600.0
         sub_population = population[:i]
         pareto_front, dominated_set = _pareto_front(population=sub_population)
         hyper_vol = _hyper_volume_2D(pareto_front, ref_point)
@@ -59,7 +60,7 @@ def generate_pareto_animation(working_dir: str,
             frame_path=frame_path,
             the_time=the_time,
             benchmarks=benchmarks,
-            )
+        )
         hyper_volumes.append(hyper_vol)
 
     print("Generating GIF")
@@ -72,24 +73,26 @@ def generate_pareto_animation(working_dir: str,
         first_bulkup=first_bulkup,
         first_slimdown=first_slimdown,
         fig_dir=figures_dir,
-        )
+    )
 
 
 def _load_csv(working_dir):
     query = os.path.join(working_dir, "population_summary.csv")
     csv_path = glob(query)[0]
-    with open(csv_path, newline='') as csvfile:
+    with open(csv_path, newline="") as csvfile:
         reader = csv.DictReader(csvfile)
         csv_content = []
         for row in reader:
-            csv_content.append({
-                "n_pars": int(row["n_parameters"]),
-                "neg_acc": -float(row["accuracy"]) + rng.uniform() * 1E-8,  # Add a tiebreaker noise
-                "parent": int(row["parent_id"]),
-                "n_bulks": int(row["bulk_counter"]),
-                "n_cuts": int(row["cut_counter"]),
-                "birth": datetime.strptime(row["birth"], "%Y-%m-%d %H:%M:%S.%f"),
-            })
+            csv_content.append(
+                {
+                    "n_pars": int(row["n_parameters"]),
+                    "neg_acc": -float(row["accuracy"]) + rng.uniform() * 1e-8,  # Add a tiebreaker noise
+                    "parent": int(row["parent_id"]),
+                    "n_bulks": int(row["bulk_counter"]),
+                    "n_cuts": int(row["cut_counter"]),
+                    "birth": datetime.strptime(row["birth"], "%Y-%m-%d %H:%M:%S.%f"),
+                }
+            )
     return csv_content
 
 
@@ -190,15 +193,16 @@ def _title_string(sub_population, dominated_area):
     return title
 
 
-def _render_a_frame(title: str,
-                    frame_path: str,
-                    ref_point: Tuple[float],
-                    benchmarks: List[Benchmark] = [],
-                    pareto_front: "np.array" = np.array([]),
-                    dominated_set: "np.array" = np.array([]),
-                    the_time: dict = None,
-                    arrow: tuple = None,
-                    ):
+def _render_a_frame(
+    title: str,
+    frame_path: str,
+    ref_point: Tuple[float],
+    benchmarks: List[Benchmark] = [],
+    pareto_front: "np.array" = np.array([]),
+    dominated_set: "np.array" = np.array([]),
+    the_time: dict = None,
+    arrow: tuple = None,
+):
     # Global figure settings:
     n_rows = 10
     plt.style.use("ggplot")
@@ -210,35 +214,35 @@ def _render_a_frame(title: str,
     plt.xscale("log")
     plt.xlabel("number of parameters")
     x_max_exp = int(math.log10(ref_point[0]))
-    plt.xlim((.9, ref_point[0] + 10 ** (x_max_exp - 1)))
-    plt.xticks(ticks=[10. ** n for n in range(x_max_exp + 1)])
+    plt.xlim((0.9, ref_point[0] + 10 ** (x_max_exp - 1)))
+    plt.xticks(ticks=[10.0**n for n in range(x_max_exp + 1)])
 
     # y-axis:
     plt.ylabel("negative accuracy (%)")
-    plt.ylim((-100., ref_point[1] + 1.))
+    plt.ylim((-100.0, ref_point[1] + 1.0))
     plt.yticks(ticks=range(0, -101, -10))
 
     # Reference point
     plt.scatter(
         x=ref_point[0],
         y=ref_point[1],
-        s=30.,
+        s=30.0,
         marker="s",
         color="k",
         label="ref point",
-        )
+    )
 
     # Benchmarks
     for bch in benchmarks:
         plt.scatter(
             x=bch.data[:, 0],
             y=bch.data[:, 1],
-            s=30.,
+            s=30.0,
             marker=bch.marker,
             color=bch.color,
             label=bch.name,
             zorder=100,  # Make sure the benchmarks are always visible
-            )
+        )
         if bch.plot_front:
             bch_front, _ = _pareto_front_coords(bch.data, ref_point)
             plt.plot(
@@ -246,7 +250,7 @@ def _render_a_frame(title: str,
                 bch_front[:-1, 1],
                 color=bch.color,
                 zorder=100,
-                )
+            )
 
     # Dominated solutions:
     if dominated_set is not None and len(dominated_set) > 0:
@@ -254,10 +258,10 @@ def _render_a_frame(title: str,
             x=dominated_set[:, 0],
             y=dominated_set[:, 1],
             marker=".",
-            s=60.,
-            alpha=.6,
+            s=60.0,
+            alpha=0.6,
             color="tab:grey",
-            )
+        )
 
     # Pareto-optimal solutions:
     p_col = "tab:red"
@@ -269,9 +273,9 @@ def _render_a_frame(title: str,
             marker="*",
             color=p_col,
             label="bulk and cut",
-            )
-        plt.plot(front_coords[:, 0], front_coords[:, 1], alpha=.5, color=p_col)
-        plt.fill(dominated_area[:, 0], dominated_area[:, 1], alpha=.2, color=p_col)
+        )
+        plt.plot(front_coords[:, 0], front_coords[:, 1], alpha=0.5, color=p_col)
+        plt.fill(dominated_area[:, 0], dominated_area[:, 1], alpha=0.2, color=p_col)
 
     # Parent-to-child connection:
     if arrow is not None:
@@ -281,21 +285,21 @@ def _render_a_frame(title: str,
             ar_coords[:, 0],
             ar_coords[:, 1],
             color="m" if ar_type == "bulk" else "c",
-            )
+        )
 
     # Add legend box
     plt.legend(loc="lower left")
 
     # Time line
     plt.subplot(n_rows, 1, n_rows)
-    plt.xlim((0., the_time["end"]))
+    plt.xlim((0.0, the_time["end"]))
     plt.xlabel("hours")
     plt.yticks([0], ["Time"])
     plt.grid(b=None)
     plt.barh(
         y=0,
         width=the_time["now"],
-        alpha=.3,
+        alpha=0.3,
         color="tab:red",
     )
     plt.axvline(the_time["bulkup"], c="tab:gray", linestyle="--")
@@ -306,7 +310,7 @@ def _render_a_frame(title: str,
     plt.close(fig)
 
 
-def _generate_gif(figs_dir, sampling: int = 1, scale: float = 1.):
+def _generate_gif(figs_dir, sampling: int = 1, scale: float = 1.0):
     imgs = []
     query = os.path.join(figs_dir, "*.png")
     fig_paths = sorted(glob(query))[::sampling]
@@ -318,7 +322,7 @@ def _generate_gif(figs_dir, sampling: int = 1, scale: float = 1.):
         imgs.append(img.copy())  # Workaround to avoid the "too many files open" exception
         img.close()
     gif_path = os.path.join(figs_dir, "animated_pareto_front.gif")
-    imgs[0].save(gif_path, save_all=True, append_images=imgs[1:], loop=0, duration=40.)
+    imgs[0].save(gif_path, save_all=True, append_images=imgs[1:], loop=0, duration=40.0)
 
 
 def _plot_volume_vs_training_time(population, hyper_volumes, first_bulkup, first_slimdown, fig_dir):

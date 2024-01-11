@@ -1,6 +1,5 @@
 import os
 import sys
-import random
 from abc import ABC, abstractmethod
 import time
 
@@ -13,7 +12,6 @@ sys.path.append(path_carbontracker)
 
 class Benchmark(ABC):
     def __init__(self, dataset_file=None, seed=None):
-
         print("Setting up tabular benchmark from file... This may take a few minutes...")
         print(dataset_file)
         start = time.time()

@@ -5,7 +5,7 @@ import numpy as np
 
 
 global_seed = 42
-#torch.manual_seed(global_seed)
+# torch.manual_seed(global_seed)
 rng = np.random.default_rng()
 
 # Pytorch device:

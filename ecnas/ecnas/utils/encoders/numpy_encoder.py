@@ -5,10 +5,8 @@ import numpy as np
 options = jsbeautifier.default_options()
 options.indent_size = 2
 
-
 class _NumpyEncoder(json.JSONEncoder):
     """Converts numpy objects to JSON-serializable format."""
-
     def default(self, obj):
         if isinstance(obj, np.ndarray):
             # Matrices converted to nested lists

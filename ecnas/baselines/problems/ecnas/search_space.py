@@ -1,11 +1,8 @@
 import ConfigSpace as CS
 from ConfigSpace.hyperparameters import UniformIntegerHyperparameter
-from ConfigSpace.hyperparameters import UniformFloatHyperparameter
 from ConfigSpace.hyperparameters import CategoricalHyperparameter
 
-
 class CustomSearchSpace(CS.ConfigurationSpace):
-
     def __init__(self, num_nodes, ops_choices):
         super(CustomSearchSpace, self).__init__()
 
@@ -73,7 +70,7 @@ class CustomSearchSpace(CS.ConfigurationSpace):
 
         parameters = []
 
-        i = FixedParameter('id', ParameterType.STRING, 'dummy')
+        i = FixedParameter("id", ParameterType.STRING, "dummy")
         parameters.append(i)
 
         # Add operation hyperparameters
@@ -105,6 +102,7 @@ class CustomSearchSpace(CS.ConfigurationSpace):
 
     def sample_hyperparameter(self, hp_name):
         import numpy as np
+
         if hp_name in self.op_names:
             return np.random.choice(self.ops_choices)
         elif hp_name in self.edge_names:

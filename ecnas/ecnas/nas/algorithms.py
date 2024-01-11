@@ -4,8 +4,12 @@ import random as rnd
 from comocma import NonDominatedList
 from tqdm import tqdm
 
-
 class MOO:
+    """
+    This class implements the MOO algorithm.
+    Note: This implementation is outdated and was not utilized in the paper.
+    It is preserved here solely for reference purposes.
+    """
     def __init__(self, benchmark, seed, single_objective=False):
         self.Benchmark = benchmark
         self.SingleObjective = single_objective
@@ -13,25 +17,39 @@ class MOO:
         rnd.seed(seed)
         np.random.seed(seed)
 
+        # Store all results as a data frame
+        self.Results = ([], [])
+
     def get_random_archs(self, n):
         archs = []
         all_lookup_keys = list(self.Benchmark.hash_iterator())
-        for i in range(n):
+        for i in range(n + 1):
             rnd_key = rnd.choice(all_lookup_keys)
             model_spec, _ = self.Benchmark.get_metrics_from_hash(rnd_key)
             matrix, labels = model_spec["module_adjacency"], model_spec["module_operations"]
             archs.append((matrix, labels))
         return archs
 
-    def evaluate_archs(self, archs, budget, f1, f2):
+    def evaluate_archs(self, archs, budgets, f1, f2):
         scores = []
-        for arch in archs:
-            matrix, labels = arch
-            metrics = self.Benchmark.query(self.Benchmark.get_model_spec(matrix, labels), budget)
+        epochs = []
+        for budget in budgets:
+            for arch in archs:
+                matrix, labels = arch
+                try:
+                    metrics = self.Benchmark.query(self.Benchmark.get_model_spec(matrix, labels), budget)
+                    f_vals = f1(metrics), f2(metrics)
+                    scores.append(f_vals)
+                    epochs.append(budget)
+                    self.Results[0].append((f_vals))
+                    self.Results[1].append(())
+                except:
+                    scores.append((1, 1e6))
+                    epochs.append(budget)
+                    self.Results[0].append((1, 1e6))
+                    self.Results[1].append(())
 
-            f_vals = f1(metrics), f2(metrics)
-            scores.append(f_vals)
-        return scores
+        return scores, epochs
 
     def linear_rank_sample(self, ndom, n):
         if len(ndom) == 1:
@@ -54,7 +72,12 @@ class MOO:
 
     def perturb(self, matrix, labels, available_ops):
         v = len(matrix)
-        matrix = np.zeros([v, v], dtype=np.int8)
+        # make matrix an np.int8 array
+        matrix = np.array(matrix, dtype=np.int8)
+        # remove first and last element of labels
+        labels = labels[1 : v - 1]
+        # matrix = np.zeros([v, v], dtype=np.int8)
+
         ops = np.zeros([len(labels) - 2], dtype=np.int8)
         idx = np.triu_indices(matrix.shape[0], k=1)
         unchanged = True
@@ -76,13 +99,16 @@ class MOO:
                 modify = np.random.choice([0, 1], p=np.array([1 - p, p]))
                 if modify:
                     choice = rnd.choice(available_ops)
-                    while available_ops.index(choice) == ops[j]:
+                    while choice != labels[j]:
                         choice = rnd.choice(available_ops)
-                    ops[j] = available_ops.index(choice)
+                    labels[j] = choice
+                    # add input and output nodes
                     unchanged = False
+
+        labels = ["input"] + labels + ["output"]
         return matrix, labels
 
-    def optimize(self, budget, f1, f2, population_size, max_iter, ref_point):
+    def optimize(self, budgets, f1, f2, population_size, max_iter, ref_point):
         # get random architectures
         archs = self.get_random_archs(population_size)
 
@@ -91,15 +117,16 @@ class MOO:
 
         # list for storing archs, objectives and hypervolume
         ndom_archs = []
-
-        for i in tqdm(range(max_iter)):
+        for i in tqdm(
+            range(int(max_iter / 4))
+        ):  # We consider all 4 budgets per iteration so max_iter/4 is func. evals.
             # evaluate architectures
-            f_vals = self.evaluate_archs(archs, budget, f1, f2)
-
+            f_vals, epochs = self.evaluate_archs(archs, budgets, f1, f2)
+            print(f_vals)
             # store matrix and labels of non-dominated solutions if not dominated
-            for arch, f_val in zip(archs, f_vals):
+            for arch, f_val, epoch in zip(archs, f_vals, epochs):
                 if not ndom.dominates(f_val):
-                    ndom_archs.append((arch, f_val, float(ndom.contributing_hypervolume(f_val))))
+                    ndom_archs.append((arch, f_val, float(ndom.contributing_hypervolume(f_val)), epoch))
             # add evaluations to ndom
             ndom.add_list(f_vals)
 
@@ -137,7 +164,7 @@ class MOO:
                         # check if architecture is valid
                         self.Benchmark._check_spec(self.Benchmark.get_model_spec(matrix, labels))
                     except Exception:
-                        continue
+                        break
                     break
 
                 # add to new_archs

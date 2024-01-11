@@ -23,6 +23,7 @@ class SHEMOA:
     :param children_per_step: how many children to produce per step
     :param fraction_mutation: balance between sexual and asexual reproduction
     """
+
     def __init__(
         self,
         search_space,
@@ -33,14 +34,13 @@ class SHEMOA:
         eta: int = 2,
         init_time: float = 0.0,
         mutation_type: Mutation = Mutation.UNIFORM,
-        recombination_type:
-        Recombination = Recombination.UNIFORM,
-        sigma: float = 1.,
+        recombination_type: Recombination = Recombination.UNIFORM,
+        sigma: float = 1.0,
         recom_proba: float = 0.5,
         selection_type: ParentSelection = ParentSelection.TOURNAMENT,
         total_number_of_function_evaluations: int = 200,
         children_per_step: int = 1,
-        fraction_mutation: float = .5
+        fraction_mutation: float = 0.5,
     ):
         assert 0 <= fraction_mutation <= 1
         assert 0 < children_per_step
@@ -48,18 +48,12 @@ class SHEMOA:
         assert 0 < sigma
         assert 0 < population_size
 
-        self.current_budget = 0 # first budget
+        self.current_budget = 0  # first budget
         self.init_time = init_time
         self.experiment = experiment
 
         # Compute succesive halving values
-        budgets, evals = get_budgets(
-            budget_min,
-            budget_max,
-            eta,
-            total_number_of_function_evaluations,
-            population_size
-        )
+        budgets, evals = get_budgets(budget_min, budget_max, eta, total_number_of_function_evaluations, population_size)
 
         # Initialize population
         self.population = [
@@ -68,11 +62,12 @@ class SHEMOA:
                 budgets[0],
                 mutation_type,
                 recombination_type,
-                'dummy.txt',
+                "dummy.txt",
                 sigma,
                 recom_proba,
-                experiment=self.experiment
-            ) for _ in range(population_size)
+                experiment=self.experiment,
+            )
+            for _ in range(population_size)
         ]
 
         # NOW WE CANNOT SORT WITH DOUBLE FITNESS, SORT ONLY BY ACCURACY
@@ -115,8 +110,10 @@ class SHEMOA:
 
         elif self.selection == ParentSelection.TOURNAMENT:
             k = 3
-            parent_ids = [np.random.choice(self.pop_size, min(k, self.pop_size), replace=False).min()
-                          for i in range(self.num_children)]
+            parent_ids = [
+                np.random.choice(self.pop_size, min(k, self.pop_size), replace=False).min()
+                for i in range(self.num_children)
+            ]
         else:
             raise NotImplementedError
         return parent_ids
@@ -202,7 +199,7 @@ class SHEMOA:
                 self.population.sort(key=lambda x: (15 - x.fitness[0]) * x.fitness[1])
             for e in range(self.evals[b]):
                 avg_fitness = self.step()
-                #print(step)
+                # print(step)
                 step += 1
 
         # Calculate pareto front of population
@@ -227,11 +224,11 @@ def get_budgets(bmin, bmax, eta, max_evals, pop_size):
 
     # take the list of budgets and assign them to closest value in [4, 12, 36, 108]
     avail_budgets = [4, 12, 36, 108]
-    budgets = [min(avail_budgets, key=lambda x:abs(x-b)) for b in budgets]
+    budgets = [min(avail_budgets, key=lambda x: abs(x - b)) for b in budgets]
 
     # Number of function evaluations to do per budget
     evals = []
-    min_evals = math.ceil((max_evals-pop_size) / sum([eta**i for i in range(len(budgets))]))
+    min_evals = math.ceil((max_evals - pop_size) / sum([eta**i for i in range(len(budgets))]))
     for _ in range(len(budgets)):
         evals.append(min_evals)
         min_evals = eta * min_evals

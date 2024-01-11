@@ -5,16 +5,13 @@ from ax import SearchSpace
 
 
 class LinearCell(torch.nn.Module):
-
     @classmethod
     def NEW(cls, index, parameters, in_elements: int):
-
-
-        out_elements = parameters[f'n_fc_{index}']
+        out_elements = parameters[f"n_fc_{index}"]
         ll = torch.nn.Linear(in_features=in_elements, out_features=out_elements)
         return cls(linear_layer=ll)
 
-    def __init__(self, linear_layer, dropout_p=.5):
+    def __init__(self, linear_layer, dropout_p=0.5):
         super(LinearCell, self).__init__()
         self.linear = linear_layer
         self.act = torch.nn.ReLU()
@@ -36,8 +33,8 @@ class LinearCell(torch.nn.Module):
             torch.nn.init.zeros_(identity_layer.bias)
 
             # And add some noise to break the symmetry
-            identity_layer.weight += torch.rand_like(identity_layer.weight) * 1E-5
-            identity_layer.bias += torch.rand_like(identity_layer.bias) * 1E-5
+            identity_layer.weight += torch.rand_like(identity_layer.weight) * 1e-5
+            identity_layer.bias += torch.rand_like(identity_layer.bias) * 1e-5
 
         return LinearCell(linear_layer=identity_layer)
 
@@ -54,16 +51,16 @@ class LinearCell(torch.nn.Module):
             input=torch.abs(self.linear.weight),
             dim=0,
         )
-        candidates = torch.argsort(w_l1norm)[:2 * elements_to_prune]
+        candidates = torch.argsort(w_l1norm)[: 2 * elements_to_prune]
         idx_to_prune = torch.randperm(candidates.size(0))[:elements_to_prune]
         in_selected = torch.arange(self.in_elements)
         for kill in idx_to_prune:
-            in_selected = torch.cat((in_selected[:kill], in_selected[kill + 1:]))
+            in_selected = torch.cat((in_selected[:kill], in_selected[kill + 1 :]))
 
         pruned_layer = torch.nn.Linear(
             in_features=num_in_elements,
             out_features=num_out_elements,
-            )
+        )
 
         weight = self.linear.weight[:, in_selected]
         bias = self.linear.bias
@@ -73,11 +70,10 @@ class LinearCell(torch.nn.Module):
         pruned_layer.weight = torch.nn.Parameter(deepcopy(weight))
         pruned_layer.bias = torch.nn.Parameter(deepcopy(bias))
 
-
         # Wrapping it up:
         pruned_cell = LinearCell(
             linear_layer=pruned_layer,
-            )
+        )
 
         return pruned_cell, in_selected
 

@@ -14,12 +14,21 @@ from hpbandster.optimizers.config_generators.parego import ParEGO as CG_PAREGO
 
 
 class ParEGO(Master):
-    def __init__(self, configspace=None, history_dir=None,
-                 eta=3, min_budget=0.01, max_budget=1,
-                 min_points_in_model=None, top_n_percent=10,
-                 num_samples=24, random_fraction=1 / 3, bandwidth_factor=3,
-                 min_bandwidth=1e-3,
-                 **kwargs):
+    def __init__(
+        self,
+        configspace=None,
+        history_dir=None,
+        eta=3,
+        min_budget=0.01,
+        max_budget=1,
+        min_points_in_model=None,
+        top_n_percent=10,
+        num_samples=24,
+        random_fraction=1 / 3,
+        bandwidth_factor=3,
+        min_bandwidth=1e-3,
+        **kwargs
+    ):
         """
                 BOHB performs robust and efficient hyperparameter optimization
                 at scale by combining the speed of Hyperband searches with the
@@ -78,16 +87,17 @@ class ParEGO(Master):
         if configspace is None:
             raise ValueError("You have to provide a valid CofigSpace object")
 
-        cg = CG_PAREGO(configspace=configspace,
-                       history_dir=history_dir,
-                       run_id=kwargs['run_id'],
-                       min_points_in_model=min_points_in_model,
-                       top_n_percent=top_n_percent,
-                       num_samples=num_samples,
-                       random_fraction=random_fraction,
-                       bandwidth_factor=bandwidth_factor,
-                       min_bandwidth=min_bandwidth
-                       )
+        cg = CG_PAREGO(
+            configspace=configspace,
+            history_dir=history_dir,
+            run_id=kwargs["run_id"],
+            min_points_in_model=min_points_in_model,
+            top_n_percent=top_n_percent,
+            num_samples=num_samples,
+            random_fraction=random_fraction,
+            bandwidth_factor=bandwidth_factor,
+            min_bandwidth=min_bandwidth,
+        )
 
         super().__init__(config_generator=cg, **kwargs)
 
@@ -102,19 +112,21 @@ class ParEGO(Master):
         self.max_SH_iter = -int(np.log(min_budget / max_budget) / np.log(eta)) + 1
         self.budgets = max_budget * np.power(eta, -np.linspace(self.max_SH_iter - 1, 0, self.max_SH_iter))
 
-        self.config.update({
-            'eta': eta,
-            'min_budget': min_budget,
-            'max_budget': max_budget,
-            'budgets': self.budgets,
-            'max_SH_iter': self.max_SH_iter,
-            'min_points_in_model': min_points_in_model,
-            'top_n_percent': top_n_percent,
-            'num_samples': num_samples,
-            'random_fraction': random_fraction,
-            'bandwidth_factor': bandwidth_factor,
-            'min_bandwidth': min_bandwidth
-        })
+        self.config.update(
+            {
+                "eta": eta,
+                "min_budget": min_budget,
+                "max_budget": max_budget,
+                "budgets": self.budgets,
+                "max_SH_iter": self.max_SH_iter,
+                "min_points_in_model": min_points_in_model,
+                "top_n_percent": top_n_percent,
+                "num_samples": num_samples,
+                "random_fraction": random_fraction,
+                "bandwidth_factor": bandwidth_factor,
+                "min_bandwidth": min_bandwidth,
+            }
+        )
 
     def is_write(self):
         return self.currently_writting
@@ -138,8 +150,13 @@ class ParEGO(Master):
         # number of 'SH rungs'
         s = self.max_SH_iter - 1 - (iteration % self.max_SH_iter)
         # number of configurations in that bracket
-        n0 = int(np.floor((self.max_SH_iter) / (s + 1)) * self.eta ** s)
+        n0 = int(np.floor((self.max_SH_iter) / (s + 1)) * self.eta**s)
         ns = [max(int(n0 * (self.eta ** (-i))), 1) for i in range(s + 1)]
 
-        return (SuccessiveHalvingParEGO(HPB_iter=iteration, num_configs=ns, budgets=self.budgets[(-s - 1):],
-                                        config_sampler=self.config_generator.get_config, **iteration_kwargs))
+        return SuccessiveHalvingParEGO(
+            HPB_iter=iteration,
+            num_configs=ns,
+            budgets=self.budgets[(-s - 1) :],
+            config_sampler=self.config_generator.get_config,
+            **iteration_kwargs
+        )

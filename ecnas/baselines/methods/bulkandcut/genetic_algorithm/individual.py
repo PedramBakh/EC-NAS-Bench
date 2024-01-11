@@ -2,23 +2,24 @@ import os
 from datetime import datetime
 
 
-class Individual():
-    def __init__(self,
-                 indv_id: int,
-                 path_to_model: str,
-                 summary: str,
-                 depth: int,
-                 birth_time: datetime,
-                 parent_id: int,
-                 bulk_counter: int,
-                 cut_counter: int,
-                 bulk_offsprings: int,
-                 cut_offsprings: int,
-                 optimizer_config: dict,
-                 learning_curves: list,
-                 n_parameters: int,
-                 parameters: dict
-                 ):
+class Individual:
+    def __init__(
+        self,
+        indv_id: int,
+        path_to_model: str,
+        summary: str,
+        depth: int,
+        birth_time: datetime,
+        parent_id: int,
+        bulk_counter: int,
+        cut_counter: int,
+        bulk_offsprings: int,
+        cut_offsprings: int,
+        optimizer_config: dict,
+        learning_curves: list,
+        n_parameters: int,
+        parameters: dict,
+    ):
         # TODO: receive the whole model as argument and read here what is necessary
         # (similar to what I did with learning curves)
         self.indv_id = indv_id

@@ -149,7 +149,7 @@ def get_metrics(eval_dir, graph_info):
                 gpu_names = []
                 gpu_usages_w = []
                 gpu_usages_j = []
-                for (device_name, w, j) in zip(
+                for device_name, w, j in zip(
                     data["avg_power_usages:"]["gpu"]["devices"],
                     data["avg_power_usages:"]["gpu"]["avg_power_usages (W)"],
                     data["avg_power_usages:"]["gpu"]["avg_energy_usages (J)"],
@@ -163,7 +163,7 @@ def get_metrics(eval_dir, graph_info):
                 cpu_names = []
                 cpu_usages_w = []
                 cpu_usages_j = []
-                for (device_name, w, j) in zip(
+                for device_name, w, j in zip(
                     data["avg_power_usages:"]["cpu"]["devices"],
                     data["avg_power_usages:"]["cpu"]["avg_power_usages (W)"],
                     data["avg_power_usages:"]["cpu"]["avg_energy_usages (J)"],

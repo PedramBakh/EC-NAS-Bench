@@ -1,8 +1,8 @@
 import numpy as np
 from hpbandster.core.base_iteration import BaseIteration
 
-class SuccessiveHalvingParEGO(BaseIteration):
 
+class SuccessiveHalvingParEGO(BaseIteration):
     def parEG0_scalarization(self, cost):
         w = np.random.random_sample(2)
         w /= np.sum(w)
@@ -14,8 +14,8 @@ class SuccessiveHalvingParEGO(BaseIteration):
 
     def _advance_to_next_stage(self, config_ids, losses):
         """
-			SuccessiveHalving MOBOHB simply continues the best based on the current multi-objective loss.
-		"""
+        SuccessiveHalving MOBOHB simply continues the best based on the current multi-objective loss.
+        """
         losses = self.parEG0_scalarization(losses)
         ranks = np.argsort(np.argsort(losses))
-        return (ranks < self.num_configs[self.stage])
+        return ranks < self.num_configs[self.stage]

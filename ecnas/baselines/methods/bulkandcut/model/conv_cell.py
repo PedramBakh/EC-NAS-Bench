@@ -4,23 +4,22 @@ import torch
 
 
 class ConvCell(torch.nn.Module):
-
     @classmethod
     def NEW(cls, index, parameters, in_elements: int):
         # sample
-        out_elements = parameters[f'n_conv_{index}']
-        kernel_size = parameters['kernel_size']
+        out_elements = parameters[f"n_conv_{index}"]
+        kernel_size = parameters["kernel_size"]
         conv = torch.nn.Conv2d(
             in_channels=in_elements,
             out_channels=out_elements,
             kernel_size=kernel_size,
             padding=(kernel_size - 1) // 2,
-            )
-        bnorm = torch.nn.BatchNorm2d(num_features=out_elements) if parameters['batch_norm'] else torch.nn.Identity()
+        )
+        bnorm = torch.nn.BatchNorm2d(num_features=out_elements) if parameters["batch_norm"] else torch.nn.Identity()
 
         return cls(conv_layer=conv, batch_norm=bnorm)
 
-    def __init__(self, conv_layer, batch_norm, dropout_p: float = .5, is_first_cell: bool = False):
+    def __init__(self, conv_layer, batch_norm, dropout_p: float = 0.5, is_first_cell: bool = False):
         super(ConvCell, self).__init__()
         self.conv = conv_layer
         self.act = torch.nn.ReLU()
@@ -47,8 +46,8 @@ class ConvCell(torch.nn.Module):
             torch.nn.init.zeros_(identity_layer.bias)
 
             # And add some noise to break the symmetry
-            identity_layer.weight += torch.rand_like(identity_layer.weight) * 1E-5
-            identity_layer.bias += torch.rand_like(identity_layer.bias) * 1E-5
+            identity_layer.weight += torch.rand_like(identity_layer.weight) * 1e-5
+            identity_layer.bias += torch.rand_like(identity_layer.bias) * 1e-5
 
         # Batch-norm morphism (is this the best way?):
         if isinstance(self.bnorm, torch.nn.BatchNorm2d):
@@ -63,8 +62,7 @@ class ConvCell(torch.nn.Module):
         return ConvCell(conv_layer=identity_layer, batch_norm=bnorm)
 
     @torch.no_grad()
-    def prune(self, out_selected, amount: float = .1):
-
+    def prune(self, out_selected, amount: float = 0.1):
         num_out_elements = len(out_selected)
         conv_weight = self.conv.weight[out_selected]
         conv_bias = self.conv.bias[out_selected]
@@ -80,13 +78,12 @@ class ConvCell(torch.nn.Module):
                 input=torch.abs(self.conv.weight),
                 dim=[0, 2, 3],
             )
-            candidates = torch.argsort(w_l1norm)[:2 * elements_to_prune]
+            candidates = torch.argsort(w_l1norm)[: 2 * elements_to_prune]
             idx_to_prune = torch.randperm(candidates.size(0))[:elements_to_prune]
             in_selected = torch.arange(self.in_elements)
             for kill in idx_to_prune:
-                in_selected = torch.cat((in_selected[:kill], in_selected[kill + 1:]))
+                in_selected = torch.cat((in_selected[:kill], in_selected[kill + 1 :]))
             conv_weight = conv_weight[:, in_selected]
-
 
         # Pruning the convolution:
         pruned_conv = torch.nn.Conv2d(
@@ -121,7 +118,7 @@ class ConvCell(torch.nn.Module):
             batch_norm=pruned_bnorm,
             # dropout_p=drop_p,
             is_first_cell=self.is_first_cell,
-            )
+        )
         return pruned_cell, in_selected
 
     @property

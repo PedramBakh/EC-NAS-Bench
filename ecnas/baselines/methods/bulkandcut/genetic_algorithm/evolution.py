@@ -1,4 +1,3 @@
-
 import os
 import csv
 import math
@@ -39,16 +38,18 @@ class Evolution:
         trainned. The time needed to validate models and plot curves will be deducte
         from the time_budget. By default False.
     """
-    def __init__(self,
-                 experiment: Experiment,
-                 input_shape: tuple,
-                 n_classes: int,
-                 work_directory: str,
-                 train_dataset: "torch.utils.data.Dataset",
-                 valid_dataset: "torch.utils.data.Dataset",
-                 test_dataset: "torch.utils.data.Dataset",
-                 debugging: bool = False
-                 ):
+
+    def __init__(
+        self,
+        experiment: Experiment,
+        input_shape: tuple,
+        n_classes: int,
+        work_directory: str,
+        train_dataset: "torch.utils.data.Dataset",
+        valid_dataset: "torch.utils.data.Dataset",
+        test_dataset: "torch.utils.data.Dataset",
+        debugging: bool = False,
+    ):
         self.experiment = experiment
         # Just variable initializations
         self.input_shape = input_shape
@@ -61,12 +62,12 @@ class Evolution:
 
         self.population = []
         self.max_num_epochs = 25  # Project constraint
-        self.slimmdown_epochs = int(round(self.max_num_epochs / 3.))
+        self.slimmdown_epochs = int(round(self.max_num_epochs / 3.0))
 
         self.optm_onetwo = OptimizerOneTwo(log_dir=work_directory)
         self.optm_three = OptimizerThree(log_dir=work_directory)
 
-    def run(self, time_budget: float, budget_split: tuple = (.35, .40, .25)):
+    def run(self, time_budget: float, budget_split: tuple = (0.35, 0.40, 0.25)):
         """Run evolutionary algorithm for a given time (budget).
 
         Parameters
@@ -84,7 +85,7 @@ class Evolution:
             If len(budget_split) != 3 or the sum of its values is different of 1.
         """
 
-        if len(budget_split) != 3 or np.sum(budget_split) != 1.:
+        if len(budget_split) != 3 or np.sum(budget_split) != 1.0:
             raise ValueError("Bad budget split")
 
         self._create_work_directory()
@@ -101,7 +102,6 @@ class Evolution:
                 break
             print(f"Still {remaining / 60.:.1f} minutes left for the initial phase")
             self._train_naive_individual()
-
 
         # Phase 2: Bulk-up
         print("Starting phase 2: Bulk-up")
@@ -133,7 +133,7 @@ class Evolution:
 
     def save_csv(self):
         file_path = os.path.join(self.work_directory, "population_summary.csv")
-        with open(file_path, 'w', newline='') as csvfile:
+        with open(file_path, "w", newline="") as csvfile:
             fieldnames = self.population[0].to_dict().keys()
             writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
             writer.writeheader()
@@ -161,7 +161,7 @@ class Evolution:
         learning_curves = new_model.start_training(
             train_dataset=self.train_dataset,
             valid_dataset=self.valid_dataset,
-            )
+        )
         new_individual = Individual(
             indv_id=indv_id,
             path_to_model=path_to_model,
@@ -176,7 +176,7 @@ class Evolution:
             optimizer_config={},
             learning_curves=learning_curves,
             n_parameters=new_model.n_parameters,
-            )
+        )
         new_model.save(file_path=path_to_model)
         new_individual.save_info()
         self.population.append(new_individual)
@@ -194,7 +194,6 @@ class Evolution:
         trial = self.experiment.new_trial(GeneratorRun([Arm(new_model._parameters_dict)]))
         trial.mark_running()
 
-
         print("Training model", indv_id)
         learning_curves = new_model.start_training(
             n_epochs=self.max_num_epochs,
@@ -202,14 +201,14 @@ class Evolution:
             valid_dataset=self.valid_dataset,
             test_dataset=self.test_dataset,
             return_all_learning_curvers=self.debugging,
-            )
+        )
         if self.debugging:
             plot_learning_curves(
                 ind_id=indv_id,
                 n_pars=new_model.n_parameters,
                 curves=learning_curves,
                 model_path=path_to_model,
-                )
+            )
         self.optm_onetwo.register_target(
             config=optim_config,
             learning_curves=learning_curves,
@@ -228,8 +227,8 @@ class Evolution:
             optimizer_config=optim_config,
             learning_curves=learning_curves,
             n_parameters=new_model.n_parameters,
-            parameters=new_model._parameters_dict
-            )
+            parameters=new_model._parameters_dict,
+        )
         new_model.save(file_path=path_to_model)
         new_individual.save_info()
         self.population.append(new_individual)
@@ -237,15 +236,18 @@ class Evolution:
 
         # Save results in Ax experiment
         trial.mark_completed()
-        data = Data.from_evaluations({
+        data = Data.from_evaluations(
+            {
                 trial.arm.name: {
-                    'num_params': (np.log10(new_model.n_parameters), 0.0),
-                    'val_acc_1': (-1.0 * learning_curves["validation_accuracy"][-1], 0.0),
-                    'val_acc_3': (-1.0 * learning_curves["validation_accuracy_3"][-1], 0.0),
-                    'tst_acc_1': (-1.0 * learning_curves["test_accuracy"][-1], 0.0),
-                    'tst_acc_3': (-1.0 * learning_curves["test_accuracy_3"][-1], 0.0),
+                    "num_params": (np.log10(new_model.n_parameters), 0.0),
+                    "val_acc_1": (-1.0 * learning_curves["validation_accuracy"][-1], 0.0),
+                    "val_acc_3": (-1.0 * learning_curves["validation_accuracy_3"][-1], 0.0),
+                    "tst_acc_1": (-1.0 * learning_curves["test_accuracy"][-1], 0.0),
+                    "tst_acc_3": (-1.0 * learning_curves["test_accuracy_3"][-1], 0.0),
                 }
-            }, trial.index)
+            },
+            trial.index,
+        )
         self.experiment.attach_data(data)
 
     def _train_offspring(self, parent_id: int, transformation: str):
@@ -254,8 +256,8 @@ class Evolution:
         bulking = transformation == "bulk-up"
 
         parent_indv = self.population[parent_id]
-        parent_indv.bulk_offsprings += (1 if bulking else 0)
-        parent_indv.cut_offsprings += (0 if bulking else 1)
+        parent_indv.bulk_offsprings += 1 if bulking else 0
+        parent_indv.cut_offsprings += 0 if bulking else 1
         parent_model = BNCmodel.LOAD(parent_indv.path_to_model)
 
         child_model = parent_model.bulkup() if bulking else parent_model.slimdown()
@@ -278,7 +280,7 @@ class Evolution:
             valid_dataset=self.valid_dataset,
             test_dataset=self.test_dataset,
             return_all_learning_curvers=self.debugging,
-            )
+        )
         if self.debugging:
             plot_learning_curves(
                 ind_id=child_id,
@@ -287,7 +289,7 @@ class Evolution:
                 model_path=path_to_child_model,
                 parent_loss=parent_indv.post_training_loss,
                 parent_accuracy=parent_indv.post_training_accuracy,
-                )
+            )
         optimizer.register_target(config=optim_config, learning_curves=learning_curves)
         new_individual = Individual(
             indv_id=child_id,
@@ -303,7 +305,7 @@ class Evolution:
             optimizer_config=optim_config,
             learning_curves=learning_curves,
             n_parameters=child_model.n_parameters,
-            parameters=child_model._parameters_dict
+            parameters=child_model._parameters_dict,
         )
         self.population.append(new_individual)
         child_model.save(file_path=path_to_child_model)
@@ -312,15 +314,18 @@ class Evolution:
 
         # Save results in Ax experiment
         trial.mark_completed()
-        data = Data.from_evaluations({
+        data = Data.from_evaluations(
+            {
                 trial.arm.name: {
-                    'num_params': (np.log10(child_model.n_parameters), 0.0),
-                    'val_acc_1': (-1.0 * learning_curves["validation_accuracy"][-1], 0.0),
-                    'val_acc_3': (-1.0 * learning_curves["validation_accuracy_3"][-1], 0.0),
-                    'tst_acc_1': (-1.0 * learning_curves["test_accuracy"][-1], 0.0),
-                    'tst_acc_3': (-1.0 * learning_curves["test_accuracy_3"][-1], 0.0),
+                    "num_params": (np.log10(child_model.n_parameters), 0.0),
+                    "val_acc_1": (-1.0 * learning_curves["validation_accuracy"][-1], 0.0),
+                    "val_acc_3": (-1.0 * learning_curves["validation_accuracy_3"][-1], 0.0),
+                    "tst_acc_1": (-1.0 * learning_curves["test_accuracy"][-1], 0.0),
+                    "tst_acc_3": (-1.0 * learning_curves["test_accuracy_3"][-1], 0.0),
                 }
-            }, trial.index)
+            },
+            trial.index,
+        )
         self.experiment.attach_data(data)
 
     def _select_individual_to_reproduce(self, transformation: str):
@@ -333,7 +338,7 @@ class Evolution:
         # random individual from the 2nd Pareto front, as determined by the non-dominated
         # sorting method.
         pareto_fronts = self._non_dominated_sorting(n_fronts=2)
-        front_number = 0 if rng.random() < .85 or len(pareto_fronts[1]) == 0 else 1
+        front_number = 0 if rng.random() < 0.85 or len(pareto_fronts[1]) == 0 else 1
         candidates = set(pareto_fronts[front_number])
 
         # Deal with some exclusions:
@@ -342,21 +347,27 @@ class Evolution:
         # Then exclude others depending on the transformation
         if transformation == "bulk-up":
             # Exclude individuals that are already too big:
-            candidates -= set([i.indv_id for i in self.population if i.n_parameters > int(1E8)])
+            candidates -= set([i.indv_id for i in self.population if i.n_parameters > int(1e8)])
 
             # Sergio: Remove candidates that if expanded cross the search space
-            candidates -= set([i.indv_id for i in self.population if i._parameters_dict['n_conv_l'] == 3 and i._parameters_dict['n_fc_l'] == 3])
+            candidates -= set(
+                [
+                    i.indv_id
+                    for i in self.population
+                    if i._parameters_dict["n_conv_l"] == 3 and i._parameters_dict["n_fc_l"] == 3
+                ]
+            )
 
             # Lets give more probability of selection to models with high accuracy
             candidates = list(candidates)  # back to an ordered data structure
             accuracies = [self.population[ind_id].post_training_accuracy for ind_id in candidates]
-            random_chance = 100. / self.n_classes
+            random_chance = 100.0 / self.n_classes
             accuracies = np.square(np.array(accuracies) - random_chance)
             accuracies = accuracies / np.sum(accuracies)  # make it sum to 1
             chosen = rng.choice(candidates, p=accuracies)
         else:
             # Exclude individuals that are already too small:
-            candidates -= set([i.indv_id for i in self.population if i.n_parameters < int(1E2)])
+            candidates -= set([i.indv_id for i in self.population if i.n_parameters < int(1e2)])
             # If possible, exclude individuals that have already been slimed-down:
             already_cut = set([i.indv_id for i in self.population if i.cut_offsprings > 0])
             if len(candidates - already_cut) > 0:
@@ -369,7 +380,15 @@ class Evolution:
         # TODO: This function is not perfect: In the rare case of where two identical
         # solutions occur and they are not dominated, none of them will be put in the front.
         # Fix this.
-        indv_id, num_of_pars, neg_accuracy,  = [], [], []
+        (
+            indv_id,
+            num_of_pars,
+            neg_accuracy,
+        ) = (
+            [],
+            [],
+            [],
+        )
         for indv in self.population:
             if indv.indv_id not in exclude_list:
                 num_of_pars.append(indv.n_parameters)

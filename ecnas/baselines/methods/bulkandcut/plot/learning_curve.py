@@ -2,16 +2,12 @@ import os
 import matplotlib.pyplot as plt
 
 fig_h = 6.2  # 6.2 inches - the default Libre-office slide height
-fig_w = fig_h * 16. / 9. / 2.  # half a widescreen (16:9)
+fig_w = fig_h * 16.0 / 9.0 / 2.0  # half a widescreen (16:9)
 
 
-def plot_learning_curves(ind_id: int,
-                         n_pars: int,
-                         curves: dict,
-                         model_path: str,
-                         parent_loss: float = None,
-                         parent_accuracy: float = None):
-
+def plot_learning_curves(
+    ind_id: int, n_pars: int, curves: dict, model_path: str, parent_loss: float = None, parent_accuracy: float = None
+):
     plt.style.use("ggplot")
     fig, (ax1, ax2) = plt.subplots(nrows=2, ncols=1, sharex=True, figsize=(fig_w, fig_h))
     fig.suptitle(f"Model {ind_id} \n {n_pars:,d} parameters")

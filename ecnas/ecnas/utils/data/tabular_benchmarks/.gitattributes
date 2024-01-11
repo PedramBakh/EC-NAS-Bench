@@ -1,7 +1,0 @@
-energy_4V9E_linscale.tfrecord filter=lfs diff=lfs merge=lfs -text
-energy_5V9E_4epochs.tfrecord filter=lfs diff=lfs merge=lfs -text
-energy_5V9E_linscale.tfrecord filter=lfs diff=lfs merge=lfs -text
-energy_7V9E_4epochs.tfrecord filter=lfs diff=lfs merge=lfs -text
-energy_7V9E_surrogate.tfrecord filter=lfs diff=lfs merge=lfs -text
-hardware filter=lfs diff=lfs merge=lfs -text
-energy_4V9E_4epochs.tfrecord filter=lfs diff=lfs merge=lfs -text

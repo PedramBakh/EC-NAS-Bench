@@ -6,8 +6,7 @@ from baselines.problems.fashion import FashionSearchSpace
 from baselines import save_experiment
 
 
-if __name__ == '__main__':
-
+if __name__ == "__main__":
     # Parameters Flowers
     N_init = 50
     num_candidates = 24
@@ -16,7 +15,7 @@ if __name__ == '__main__':
     max_budget = 25
     max_function_evals = 2000
     search_space = FlowersSearchSpace()
-    experiment = get_flowers('MOBOHB')
+    experiment = get_flowers("MOBOHB")
 
     # Parameters Fashion
     # N_init = 10
@@ -27,7 +26,6 @@ if __name__ == '__main__':
     # max_function_evals = 150
     # search_space = FlowersSearchSpace()
     # experiment = get_flowers('MOBOHB')
-
 
     ################
     #### MOBOHB ####
@@ -42,4 +40,4 @@ if __name__ == '__main__':
         min_budget=min_budget,
         max_budget=max_budget,
     )
-    save_experiment(experiment, f'{experiment.name}.pickle')
+    save_experiment(experiment, f"{experiment.name}.pickle")

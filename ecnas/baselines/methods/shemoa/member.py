@@ -7,34 +7,42 @@ from typing import Optional, Dict
 
 from ax import Experiment, GeneratorRun, Arm
 
+
 class Recombination(enum.IntEnum):
     NONE = -1  # can be used when only mutation is required
     UNIFORM = 0  # uniform crossover (only really makes sense for function dimension > 1)
     INTERMEDIATE = 1  # intermediate recombination
+
 
 class Mutation(enum.IntEnum):
     NONE = -1  # Can be used when only recombination is required
     UNIFORM = 0  # Uniform mutation
     GAUSSIAN = 1  # Gaussian mutation
 
+
 class ParentSelection(enum.IntEnum):
     NEUTRAL = 0
     FITNESS = 1
     TOURNAMENT = 2
 
+
 class Member:
     """
     Class to simplify member handling.
     """
-    def __init__(self, search_space,
-                 budget: int,
-                 mutation: Mutation,
-                 recombination: Recombination,
-                 name_file: Optional[str] = 'eash',
-                 sigma: Optional[float] = None,
-                 recom_prob: Optional[float] = None,
-                 x_coordinate: Optional[Dict] = None,
-                 experiment: Experiment = None) -> None:
+
+    def __init__(
+        self,
+        search_space,
+        budget: int,
+        mutation: Mutation,
+        recombination: Recombination,
+        name_file: Optional[str] = "eash",
+        sigma: Optional[float] = None,
+        recom_prob: Optional[float] = None,
+        x_coordinate: Optional[Dict] = None,
+        experiment: Experiment = None,
+    ) -> None:
         """
         Init
         :param initial_x: Initial coordinate of the member
@@ -67,7 +75,7 @@ class Member:
 
             ############ AX THINGS ##############
             params = deepcopy(self._x)
-            params['budget'] = int(self._budget)
+            params["budget"] = int(self._budget)
 
             # params['n_conv_0'] = params['n_conv_0'] if 'n_conv_0' in params else 16
             # params['n_conv_1'] = params['n_conv_1'] if 'n_conv_1' in params else 16
@@ -80,15 +88,15 @@ class Member:
             # params['batch_norm'] = bool(params['batch_norm'])
             # params['global_avg_pooling'] = bool(params['global_avg_pooling'])
 
-            trial_name = '{}-{}'.format(self._id, self._num_evals)
-            params['id'] = trial_name
+            trial_name = "{}-{}".format(self._id, self._num_evals)
+            params["id"] = trial_name
 
             trial = self._experiment.new_trial(GeneratorRun([Arm(params, name=trial_name)]))
             data = self._experiment.eval_trial(trial)
             self._num_evals += 1
 
-            acc = float(data.df[data.df['metric_name'] == 'val_acc']['mean'])
-            ene = float(data.df[data.df['metric_name'] == 'energy']['mean'])
+            acc = float(data.df[data.df["metric_name"] == "val_acc"]["mean"])
+            ene = float(data.df[data.df["metric_name"] == "energy"]["mean"])
 
             self._fit = [ene, acc]
 
@@ -137,8 +145,17 @@ class Member:
             # We won't consider any other mutation types
             raise NotImplementedError
 
-        child = Member(self._space, self._budget, self._mutation, self._recombination, self._name_file,
-                       self._sigma, self._recom_prob, new_x, self._experiment)
+        child = Member(
+            self._space,
+            self._budget,
+            self._mutation,
+            self._recombination,
+            self._name_file,
+            self._sigma,
+            self._recom_prob,
+            new_x,
+            self._experiment,
+        )
         self._age += 1
         return child
 
@@ -148,36 +165,51 @@ class Member:
         :param partner: Member
         :return: new offspring based on this member and partner
         """
-        #if self._recombination == Recombination.INTERMEDIATE:
+        # if self._recombination == Recombination.INTERMEDIATE:
         #    new_x = 0.5 * (self.x_coordinate + partner.x_coordinate)
         if self._recombination == Recombination.UNIFORM:
-            assert self._recom_prob is not None, \
-                'for this recombination type you have to specify the recombination probability'
+            assert (
+                self._recom_prob is not None
+            ), "for this recombination type you have to specify the recombination probability"
 
             new_x = self.x_coordinate.copy()
             for k in new_x.keys():
-                if (np.random.rand() >= self._recom_prob) and (k in partner.x_coordinate.keys()) \
-                   and (self._space.is_mutable_hyperparameter(k)):
+                if (
+                    (np.random.rand() >= self._recom_prob)
+                    and (k in partner.x_coordinate.keys())
+                    and (self._space.is_mutable_hyperparameter(k))
+                ):
                     new_x[k] = partner.x_coordinate[k]
 
         elif self._recombination == Recombination.NONE:
             new_x = self.x_coordinate.copy()  # copy is important here to not only get a reference
         else:
             raise NotImplementedError
-        
+
         # self.logger.debug('new point after recombination:')
         # self.logger.debug(new_x)
-        
-        child = Member(self._space, self._budget, self._mutation, self._recombination, self._name_file,
-                       self._sigma, self._recom_prob, new_x, self._experiment)
+
+        child = Member(
+            self._space,
+            self._budget,
+            self._mutation,
+            self._recombination,
+            self._name_file,
+            self._sigma,
+            self._recom_prob,
+            new_x,
+            self._experiment,
+        )
         self._age += 1
         return child
 
     def __str__(self):
         """Makes the class easily printable"""
-        str = "Population member: Age={}, budget={}, x={}, f(x)={}".format(self._age, self._budget, self.x_coordinate, self.fitness)
+        str = "Population member: Age={}, budget={}, x={}, f(x)={}".format(
+            self._age, self._budget, self.x_coordinate, self.fitness
+        )
         return str
 
     def __repr__(self):
         """Will also make it printable if it is an entry in a list"""
-        return self.__str__() + '\n'
+        return self.__str__() + "\n"

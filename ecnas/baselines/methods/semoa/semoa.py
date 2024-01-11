@@ -1,34 +1,22 @@
-from ax.core.generator_run import GeneratorRun
 from baselines.core.multiobjective_experiment import MultiObjectiveSimpleExperiment
-import torch
 import numpy as np
-from copy import deepcopy
-from typing import Optional, Callable
 from .individual import Individual
 from ax import Models, Experiment, Data, MultiObjective
-from ax.core import ObservationFeatures
-from ax.core.observation import observations_from_data
-from ax.modelbridge import MultiObjectiveTorchModelBridge
-from ax.modelbridge.factory import DEFAULT_EHVI_BATCH_LIMIT
-from ax.modelbridge.registry import MODEL_KEY_TO_MODEL_SETUP
-from ax.models.torch.botorch_defaults import get_and_fit_model
-from ax.utils.common.typeutils import checked_cast
 from comocma import NonDominatedList
-
 
 class SEMOA:
     def __init__(
-            self,
-            search_space,
-            experiment: Experiment,
-            population_size: int = 10,
-            num_generations: int = 100,
-            min_budget: int = 4,
-            max_budget: int = 108,
-            expected_node_changes: float = 0.5,  # expected number of mutations per individual
-            expected_edge_changes: float = 2.0,  # expected number of edge changes per individual
-            eta_p: float = 1.9,  # parent selection pressure
-            eta_o: float = 2.0 - 1.9,  # offspring selection pressure
+        self,
+        search_space,
+        experiment: Experiment,
+        population_size: int = 10,
+        num_generations: int = 100,
+        min_budget: int = 4,
+        max_budget: int = 108,
+        expected_node_changes: float = 0.5,  # expected number of mutations per individual
+        expected_edge_changes: float = 2.0,  # expected number of edge changes per individual
+        eta_p: float = 1.9,  # parent selection pressure
+        eta_o: float = 2.0 - 1.9,  # offspring selection pressure
     ):
         assert min_budget <= max_budget
         assert min_budget in [4, 12, 36, 108] and max_budget in [4, 12, 36, 108]
@@ -41,7 +29,7 @@ class SEMOA:
 
         self.current_budget = min_budget
         self.experiment = experiment
-        self.budgets = [min_budget * 3 ** i for i in range(int(np.log(max_budget / min_budget) / np.log(3)) + 1)]
+        self.budgets = [min_budget * 3**i for i in range(int(np.log(max_budget / min_budget) / np.log(3)) + 1)]
         self.population_size = population_size
         self.num_generations = num_generations
         self.expected_node_changes = expected_node_changes
@@ -58,16 +46,11 @@ class SEMOA:
             optimization_config=self.experiment.optimization_config,
         )
 
-        self.metrics = [
-            m for m in self.experiment.optimization_config.objective.metrics
-        ]
+        self.metrics = [m for m in self.experiment.optimization_config.objective.metrics]
 
         self.population = [
-            Individual(self.budgets[0],
-                       self.search_space,
-                       name_file="dummy.txt",
-                       experiment=self.experiment
-                       ) for _ in range(self.population_size)
+            Individual(self.budgets[0], self.search_space, name_file="dummy.txt", experiment=self.experiment)
+            for _ in range(self.population_size)
         ]
 
     def select_parents(self):
@@ -80,9 +63,7 @@ class SEMOA:
 
         m = len(self.population)
         parent_indices = np.arange(m)
-        p = np.array(
-            [1.0 / m * (self.eta_p - (self.eta_p - self.eta_o) * i / (m - 1)) for i in parent_indices]
-        )
+        p = np.array([1.0 / m * (self.eta_p - (self.eta_p - self.eta_o) * i / (m - 1)) for i in parent_indices])
         eps = 1e-3
         assert p.sum() < 1.0 + eps
         selection = np.random.choice(parent_indices, size=self.population_size, p=p)
@@ -94,7 +75,9 @@ class SEMOA:
         Method for evolving the population
         """
         # Sort population by contributing hypervolume
-        self.population.sort(key=lambda x: self.best.contributing_hypervolume((x.fitness[0], x.fitness[1])), reverse=True)
+        self.population.sort(
+            key=lambda x: self.best.contributing_hypervolume((x.fitness[0], x.fitness[1])), reverse=True
+        )
 
         # Select parents
         parent_indices = self.select_parents()
@@ -138,6 +121,7 @@ class SEMOA:
 
     def optimize(self):
         from tqdm import tqdm
+
         for _ in tqdm(range(self.num_generations // len(self.budgets))):
             for b in self.budgets:
                 self.current_budget = b
@@ -147,4 +131,3 @@ class SEMOA:
                 self.step()
 
         return self.best
-

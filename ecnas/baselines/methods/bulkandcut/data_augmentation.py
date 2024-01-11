@@ -4,8 +4,8 @@ from torchvision.transforms.functional import hflip
 from baselines.methods.bulkandcut import rng
 
 
-class DataAugmentation():
-    def __init__(self, n_classes: int, mixup_alpha: float = .25):
+class DataAugmentation:
+    def __init__(self, n_classes: int, mixup_alpha: float = 0.25):
         self.n_classes = n_classes
         self.alpha = mixup_alpha
 
@@ -17,7 +17,7 @@ class DataAugmentation():
 
     def _hflip(self, data):
         batch_size = data.size(0)
-        mask = torch.rand(size=(batch_size,)) > .5
+        mask = torch.rand(size=(batch_size,)) > 0.5
         data[mask] = hflip(data[mask])
         return data
 

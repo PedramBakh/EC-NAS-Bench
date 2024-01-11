@@ -1,127 +1,25 @@
-# EC-NAS-Bench
+# [ICASSP 2024] EC-NAS-Bench
 ![PythonVersion](https://img.shields.io/badge/Made%20with-Python%203.8-1f425f.svg?logo=python)
 ![Activity](https://img.shields.io/github/last-commit/PedramBakh/ec-nas-bench)
 ![License](https://img.shields.io/github/license/PedramBakh/ec-nas-bench)
 
-**N.B.:** _In the updated paper for 2023, the experimental framework has been streamlined to be similar to [Multi-Obj-Baselines](https://github.com/automl/multi-obj-baselines). The "MOO" algorithm referred to in the examples below is now denoted as "SEMOA" (Simple Evolutionary Multi-Objective Algorithm). Additionally, the repository has been enriched with subspace benchmarks that include evaluations on different hardware configurations._
-
 ## Abstract
-The demand for large-scale computational resources for Neural Architecture Search (NAS) has been lessened by tabular benchmarks for NAS. Evaluating NAS strategies is now possible on extensive search spaces and at a moderate computational cost. But so far, NAS has mainly focused on maximising performance on some hold-out validation/test set. However, energy consumption is a partially conflicting objective that should not be neglected. We hypothesise that constraining NAS to include the energy consumption of training the models could reveal a subspace of undiscovered architectures that are more computationally efficient with a smaller carbon footprint. To support the hypothesis, an existing tabular benchmark for NAS is augmented with the energy consumption of each architecture. We then perform multi-objective optimisation (MOO) that includes energy consumption as an additional objective. We demonstrate the usefulness of multi-objective NAS for uncovering the trade-off between performance and energy consumption as well as for finding more energy-efficient architectures. The updated tabular benchmark is open-sourced to encourage the further exploration of energy consumption-aware NAS.
-
-**This repository contains code for the paper [Energy Consumption-Aware Tabular Benchmarks For NAS](https://arxiv.org/abs/2210.06015).**
+Energy consumption from the selection, training, and deployment of deep learning models has seen a significant uptick recently. 
+This work aims to facilitate the design of energy-efficient deep learning models that require less computational resources and prioritize environmental sustainability. 
+Neural architecture search (NAS) benefits from tabular benchmarks, which evaluate NAS strategies cost-effectively through pre-computed performance statistics. 
+We advocate for including energy efficiency as a pivotal performance criterion in NAS. To this end, we introduce an enhanced tabular benchmark encompassing data on energy consumption for varied architectures. 
+The benchmark, designated as EC-NAS, has been made available in an open-source format to advance research in energy-conscious NAS.
+EC-NAS-Bench incorporates a surrogate model to predict energy consumption, aiding in diminishing the energy expenditure of dataset creation. 
+Our findings emphasize the potential of EC-NAS by leveraging multi-objective optimization algorithms, revealing a balance between energy use and accuracy. 
+This suggests the feasibility of identifying energy-lean architectures without compromising performance.
 
 <p float="left">
-  <img src="images/scatter_5v.png" width="410" height="300"" />
-  <img src="images/attainment_108.png" width="410" height="300" />
+  <img src="ecnas/experiments/figures/scatter_7v.png" width="410" height="" />
+  <img src="ecnas/experiments/figures/radar_7v_semoa.png" width="410" height="348"/>
 </p>
 <p float="left">
-  <img src="images/moo_radar_108.png" width="410" height="350" />
-  <img src="images/so_radar_108.png" width="410" height="350" />
-</p>
-
-## Getting started
-To install the requirements, using Conda, run the following command:
-```sh 
-$ conda env create --name envname --file=environment.yml
-```
-Due to possible dependency issues for newer hardware, pip requirements are also included separately.
-To install the requirements, using pip, un the following command:
-```sh 
-$ pip install -r requirements.txt
-```
-
-## Benchmarks
-
-| Benchmark | Description | Dataset | Space | Hardware | No. Architectures | Datapoints | Surrogate Type |
-| --- | --- | --- | --- | --- | --- | --- | --- |
-| **Surrogate Benchmarks** | | | | | | | |
-| `energy_7V9E_surrogate.tfrecord` | Image Classification | CIFAR-10 | 7V | NVIDIA Quadro RTX 6000 | 423K | 1.6M | MLP |
-| `energy_5V9E_linscale.tfrecord` | Image Classification | CIFAR-10 | 5V | NVIDIA Quadro RTX 6000 | 2632 | 10528 | Linear Scaling |
-| `energy_4V9E_linscale.tfrecord` | Image Classification | CIFAR-10 | 4V | NVIDIA Quadro RTX 6000 | 91 | 364 | Linear Scaling |
-| **Non-Surrogate Benchmarks (4 Epochs)** | | | | | | | |
-| `energy_7V9E_4epochs.tfrecord` | Image Classification | CIFAR-10 | 7V | NVIDIA Quadro RTX 6000 | 4877 | 19508 | No |
-| `energy_5V9E_4epochs.tfrecord` | Image Classification | CIFAR-10 | 5V | NVIDIA Quadro RTX 6000 | 2632 | 2632 | No |
-| `energy_4V9E_4epochs.tfrecord` | Image Classification | CIFAR-10 | 4V | NVIDIA Quadro RTX 6000 | 91 | 91 | No |
-| **Hardware-Specific Benchmarks** | | | | | | | |
-| `energy_4V9E_quadrortx6000.tfrecord` | Image Classification | CIFAR-10 | 4V | NVIDIA Quadro RTX 6000 | 91 | 91 | No |
-| `energy_4V9E_rtx3060.tfrecord` | Image Classification | CIFAR-10 | 4V | NVIDIA RTX 3060 | 91 | 91 | No |
-| `energy_4V9E_rtx3090.tfrecord` | Image Classification | CIFAR-10 | 4V | NVIDIA RTX 3090 | 91 | 91 | No |
-| `energy_4V9E_titanxp.tfrecord` | Image Classification | CIFAR-10 | 4V | NVIDIA Titan Xp | 91 | 91 | No |
-
-
-
-It is also possible to use MOO algorithm with the original NAS-Bench-101 dataset, which can be downloaded using `ecnas/utils/get_bencmarks.py`.
-
-## Example usage
-The following code initializes the EC-Nas-Bench with the 5V space, runs the MOO algorithm for validation accuracy and energy consumption, and returns the set of Pareto-efficient solutions.
-```python
-from ecnas.api import nasbench101
-from ecnas.nas.algorithms import MOO
-from ecnas.utils.scale import metrics
-from ecnas.utils.plot import latex
-import numpy as np
-import matplotlib.pyplot as plt
-plt.rcParams["text.usetex"] = True
-
-# Path to tfrecord
-# Initialize benchmark
-fn_5v = "/path/to/ecnas/ecnas/utils/data/tabular_benchmarks/energy_5V9E_estimate.tfrecord"
-nb5v = nasbench101.ECNASBench(fn_5v)
-
-# Define some objectives functions (accessed pre-saved training statistics of trained architectures)
-acc = lambda x: (-x["validation_accuracy"])
-ene = lambda x: (x["energy (kWh)"])
-time = lambda x: (x["training_time"])
-co2 = lambda x: (x["co2eq (g)"])
-
-# Search parameters for the MOO-algorithm
-budget = 108
-pop_size = 20
-iter = int(1e2)
-ref_point = [1, 1e8]
-seed = 42
-
-# Instantiate MOO algorithm
-moo = MOO(benchmark=nb5v,seed=seed)
-
-# Run MOO and return the pareto-efficient solutions (pareto_sol), 
-# and the corresponding architectures with additional information (pareto_archs)
-pareto_sol, pareto_archs = moo.optimize(budget, acc, ene, pop_size, int(iter), ref_point)
-```
-Using the results from the optimization above, the Pareto-front, including the extreme points and the knee point, can be plotted with the following code. Additional examples can be found in `attainment.py`, `scatter.py` and `complex_radar.py`.
-```python
-# Define colors
-yellow = "#FFD700"
-dark_green = "#006400"
-dark_blue = "#00008B"
-grey = "#808080"
-
-# Get x and y data points
-x, y = [i[0] for i in ndom], [i[1] for i in ndom]
-
-# Determine knee point
-angles = metrics.get_bend_angles(x, y)
-idx = np.argmin(angles)
-knee_x, knee_y = x[idx], y[idx]
-
-# Get metrics for convenience
-df = metrics.get_dataframe(ndom_archs, nb5v, budget)
-
-# Plot pareto front
-fig = plt.figure()
-plt.scatter(x, y, color=grey)
-plt.scatter(-df.iloc[0].values.tolist()[1], df.iloc[0].values.tolist()[2], color=dark_blue, marker="^")
-plt.scatter(-df.iloc[1].values.tolist()[1], df.iloc[1].values.tolist()[2], color=dark_green, marker="^")
-plt.scatter(knee_x, knee_y, color=yellow, marker="^")
-
-plt.xlabel("$r_{0},-P_v$")
-plt.ylabel("$r_{1},E$(kWh)")
-plt.ylim(0.01, 1.4)
-plt.xlim(-0.95, -0.83)
-plt.savefig(f"front_{budget}.png", dpi=300, bbox_inches="tight")
-```
-<p float="left">
-  <img src="images/front_108.png" width="410" height="300" />
+  <img src="ecnas/experiments/figures/front_7v_semoa.png" width="410" height="348"/>
+  <img src="ecnas/experiments/figures/attainment_curve_7v.png" width="410" height="348"/>
 </p>
 
 ## Citation
@@ -132,4 +30,81 @@ Kindly use the following BibTeX entry if you use the code in your work.
 	author={Pedram Bakhtiarifard and Christian Igel and Raghavendra Selvan},
  	journal={arXiv preprint arXiv:2023.2210.06015},
 	year={2023}}
+```
+
+## Benchmark Overview
+
+#### Surrogate Benchmarks
+| Benchmark File                    | Description          | Dataset  | Space | Hardware             | Architectures | Datapoints | Surrogate Type |
+|-----------------------------------|----------------------|----------|-------|----------------------|---------------|------------|----------------|
+| `energy_7V9E_surrogate.tfrecord`  | Image Classification | CIFAR-10 | 7V    | NVIDIA Quadro RTX 6000 | 423K         | 1.6M       | MLP            |
+| `energy_5V9E_linscale.tfrecord`   | Image Classification | CIFAR-10 | 5V    | NVIDIA Quadro RTX 6000 | 2632         | 10528      | Linear Scaling |
+| `energy_4V9E_linscale.tfrecord`   | Image Classification | CIFAR-10 | 4V    | NVIDIA Quadro RTX 6000 | 91           | 364        | Linear Scaling |
+
+#### Non-Surrogate Benchmarks (4 Epochs)
+| Benchmark File                    | Description          | Dataset  | Space | Hardware             | Architectures | Datapoints | Surrogate Type |
+|-----------------------------------|----------------------|----------|-------|----------------------|---------------|------------|----------------|
+| `energy_7V9E_4epochs.tfrecord`    | Image Classification | CIFAR-10 | 7V    | NVIDIA Quadro RTX 6000 | 4877         | 19508      | --             |
+| `energy_5V9E_4epochs.tfrecord`    | Image Classification | CIFAR-10 | 5V    | NVIDIA Quadro RTX 6000 | 2632         | 2632       | --             |
+| `energy_4V9E_4epochs.tfrecord`    | Image Classification | CIFAR-10 | 4V    | NVIDIA Quadro RTX 6000 | 91           | 91         | --             |
+
+#### Hardware-Specific Benchmarks
+| Benchmark File                    | Description          | Dataset  | Space | Hardware             | Architectures | Datapoints | Surrogate Type |
+|-----------------------------------|----------------------|----------|-------|----------------------|---------------|------------|----------------|
+| `energy_4V9E_quadrortx6000.tfrecord` | Image Classification | CIFAR-10 | 4V    | NVIDIA Quadro RTX 6000 | 91           | 91         | --             |
+| `energy_4V9E_rtx3060.tfrecord`    | Image Classification | CIFAR-10 | 4V    | NVIDIA RTX 3060      | 91           | 88         | --             |
+| `energy_4V9E_rtx3090.tfrecord`    | Image Classification | CIFAR-10 | 4V    | NVIDIA RTX 3090      | 91           | 91         | --             |
+| `energy_4V9E_titanxp.tfrecord`    | Image Classification | CIFAR-10 | 4V    | NVIDIA Titan Xp      | 91           | 91         | --             |
+
+## Requirements
+To install the requirements, using Conda, run the following command:
+```sh 
+$ conda env create --name envname --file=environment.yml
+```
+Due to possible dependency issues for newer hardware, pip requirements are also included separately.
+To install the requirements, using pip, use the following command:
+```sh 
+$ pip install -r requirements.txt
+```
+
+## Example Usage
+Experiments can be found in the `ecnas/examples` directory and run with e.g., `python -m ecnas.examples.semoa`.
+```python
+from baselines import save_experiment
+from baselines.methods.semoa import SEMOA
+
+from baselines.problems.ecnas import ecnasSearchSpace
+from baselines.problems import get_ecnas
+from tqdm import tqdm
+import numpy as np
+
+num_nodes = 7
+ops_choices = ["conv3x3-bn-relu", "conv1x1-bn-relu", "maxpool3x3"]
+
+# Parameters ecnas
+N_init = 10
+min_budget = 4
+max_budget = 108
+max_function_evals = 100
+
+trials = 10
+
+for run in tqdm(range(trials)):
+    np.random.seed(run)
+    search_space = ecnasSearchSpace(num_nodes, ops_choices)
+    experiment = get_ecnas(num_nodes, ops_choices, "SEMOA")
+
+    ea = SEMOA(
+        search_space,
+        experiment,
+        population_size=10,
+        num_generations=max_function_evals,
+        min_budget=min_budget,
+        max_budget=max_budget,
+    )
+    ea.optimize()
+
+    res = experiment.fetch_data().df
+    save_experiment(res, f"experiments/semoa/{num_nodes}v_{experiment.name}_{run}.pickle")
+    print(res)
 ```

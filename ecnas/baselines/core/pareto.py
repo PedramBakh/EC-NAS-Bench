@@ -22,6 +22,7 @@ def pareto(costs: np.ndarray):
             is_pareto[i] = True  # keep self
     return is_pareto
 
+
 def pareto_index(costs: np.ndarray, index_list):
     """
     Find the pareto-optimal points
@@ -32,7 +33,6 @@ def pareto_index(costs: np.ndarray, index_list):
     is_pareto = np.ones(costs.shape[0], dtype=bool)
 
     for i, c in enumerate(costs):
-
         if is_pareto[i]:
             # determine all points that have a smaller cost
             all_with_lower_costs = np.any(costs < c, axis=1)
@@ -43,6 +43,7 @@ def pareto_index(costs: np.ndarray, index_list):
     index_return = index_list[is_pareto]
 
     return is_pareto, index_return
+
 
 def nDS_index(costs, index_list):
     """
@@ -74,13 +75,12 @@ def crowdingDist(fronts, index_list):
     """
     dist_list = []
     index_return_list = []
-    
+
     for g in range(len(fronts)):
         front = fronts[g]
         index_ = index_list[g]
 
-        sorted_front = np.sort(front.view([('', front.dtype)] * front.shape[1]),
-                               axis=0).view(np.float)
+        sorted_front = np.sort(front.view([("", front.dtype)] * front.shape[1]), axis=0).view(np.float)
 
         _, sorted_index = (list(t) for t in zip(*sorted(zip([f[0] for f in front], index_))))
 
@@ -89,9 +89,9 @@ def crowdingDist(fronts, index_list):
         for column in range(normalized_front.shape[1]):
             ma, mi = np.max(normalized_front[:, column]), np.min(normalized_front[:, column])
             normalized_front[:, column] -= mi
-            normalized_front[:, column] /= (ma - mi)
+            normalized_front[:, column] /= ma - mi
 
-        dists = np.empty((sorted_front.shape[0], ), dtype=np.float)
+        dists = np.empty((sorted_front.shape[0],), dtype=np.float)
         dists[0] = np.inf
         dists[-1] = np.inf
 
@@ -107,7 +107,6 @@ def crowdingDist(fronts, index_list):
         index_return_list.append(index_sorted_max)
 
     return dist_list, index_return_list
-
 
 
 def nDS(costs: np.ndarray):
@@ -143,27 +142,27 @@ def computeHV2D(front: np.ndarray, ref: List[float]):
     assert front.ndim == 2
     assert len(ref) == 2
 
-
     # We assume all points already sorted
     list_ = [ref]
     for x in front:
-        elem_at = len(list_) -1
+        elem_at = len(list_) - 1
         list_.append([list_[elem_at][0], x[1]])  # add intersection points by keeping the x constant
         list_.append(x)
     list_.append([list_[-1][0], list_[0][1]])
     sorted_front = np.array(list_)
 
-    def shoelace(x_y): # taken from https://stackoverflow.com/a/58515054
+    def shoelace(x_y):  # taken from https://stackoverflow.com/a/58515054
         x_y = np.array(x_y)
-        x_y = x_y.reshape(-1,2)
+        x_y = x_y.reshape(-1, 2)
 
         x = x_y[:, 0]
         y = x_y[:, 1]
 
-        S1 = np.sum(x*np.roll(y,-1))
-        S2 = np.sum(y*np.roll(x,-1))
+        S1 = np.sum(x * np.roll(y, -1))
+        S2 = np.sum(y * np.roll(x, -1))
 
-        area = .5*np.absolute(S1 - S2)
+        area = 0.5 * np.absolute(S1 - S2)
 
         return area
+
     return shoelace(sorted_front)

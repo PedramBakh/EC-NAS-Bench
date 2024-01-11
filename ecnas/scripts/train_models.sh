@@ -100,7 +100,6 @@ fi
 ########################################################################################################################
 # Run command
 export TF_FORCE_GPU_ALLOW_GROWTH="true"
-export TF_GPU_ALLOCATOR=cuda_malloc_async
 parentdir="${PWD%/*}"
 cd $parentdir/vendors/ec_nasbench
 python -m nasbench.scripts.run_evaluation --module_vertices=$vertices --max_edges=$edges --train_epochs=$epochs --models_file_name=$graph_file --intermediate_evaluations=$intermediate_evaluations --total_workers=$workers --worker_id=$worker_id --worker_id_offset=$worker_offset

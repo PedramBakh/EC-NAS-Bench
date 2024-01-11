@@ -16,44 +16,44 @@ class FlowerNet(nn.Module):
     """
     The model to optimize
     """
+
     def __init__(self, config, input_shape=(3, 28, 28), num_classes=10):
         super(FlowerNet, self).__init__()
 
         inp_ch = input_shape[0]
 
         layers = []
-        for i in range(config['n_conv_l']):
+        for i in range(config["n_conv_l"]):
+            out_ch = config["n_conv_{}".format(i)]
 
-            out_ch = config['n_conv_{}'.format(i)]
-
-            ks = config['kernel_size'] if config['kernel_size'] > 2 else [3, 5, 7][config['kernel_size']]
+            ks = config["kernel_size"] if config["kernel_size"] > 2 else [3, 5, 7][config["kernel_size"]]
             layers.append(nn.Conv2d(inp_ch, out_ch, kernel_size=ks, padding=(ks - 1) // 2))
             layers.append(nn.ReLU(inplace=False))
 
-            if config['batch_norm']:
+            if config["batch_norm"]:
                 layers.append(nn.BatchNorm2d(out_ch))
 
             layers.append(nn.MaxPool2d(kernel_size=2, stride=2))
 
             inp_ch = out_ch
-        
+
         self.conv_layers = nn.Sequential(*layers)
-        self.pooling = nn.AdaptiveAvgPool2d(1) if config['global_avg_pooling'] else nn.Identity()
+        self.pooling = nn.AdaptiveAvgPool2d(1) if config["global_avg_pooling"] else nn.Identity()
         self.output_size = num_classes
 
         self.fc_layers = nn.ModuleList()
 
         inp_n = self._get_conv_output(input_shape)
-        
+
         layers = [nn.Flatten()]
-        for i in range(config['n_fc_l']):
-            out_n = config['n_fc_{}'.format(i)]
+        for i in range(config["n_fc_l"]):
+            out_n = config["n_fc_{}".format(i)]
 
             layers.append(nn.Linear(inp_n, out_n))
             layers.append(nn.ReLU(inplace=False))
 
             inp_n = out_n
-        
+
         layers.append(nn.Linear(inp_n, num_classes))
         self.fc_layers = nn.Sequential(*layers)
 
@@ -127,46 +127,44 @@ class FlowerNet(nn.Module):
 
 
 def evaluate_network(config, budget=None):
+    budget = budget if budget else config["budget"]
 
-    budget = budget if budget else config['budget']
+    device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 
-    device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
-
-    path = lambda x: str(pathlib.Path(__file__).parent.absolute().joinpath('data').joinpath(x))
+    path = lambda x: str(pathlib.Path(__file__).parent.absolute().joinpath("data").joinpath(x))
 
     # Read train datasets
-    x_train = torch.tensor(np.load(path('x_train.npy'))).float()
+    x_train = torch.tensor(np.load(path("x_train.npy"))).float()
     x_train = x_train.permute(0, 3, 1, 2)
 
-    y_train = torch.tensor(np.load(path('y_train.npy'))).long()
+    y_train = torch.tensor(np.load(path("y_train.npy"))).long()
 
     ds_train = torch.utils.data.TensorDataset(x_train, y_train)
-    ds_train = torch.utils.data.DataLoader(ds_train, batch_size=config['batch_size'], shuffle=True)
+    ds_train = torch.utils.data.DataLoader(ds_train, batch_size=config["batch_size"], shuffle=True)
 
     # Read val datasets
-    x_val = torch.tensor(np.load(path('x_val.npy'))).float()
+    x_val = torch.tensor(np.load(path("x_val.npy"))).float()
     x_val = x_val.permute(0, 3, 1, 2)
 
-    y_val = torch.tensor(np.load(path('y_val.npy'))).long()
+    y_val = torch.tensor(np.load(path("y_val.npy"))).long()
 
     # Read Test datasets
-    x_test = torch.tensor(np.load(path('x_test.npy'))).float()
+    x_test = torch.tensor(np.load(path("x_test.npy"))).float()
     x_test = x_test.permute(0, 3, 1, 2)
-    
-    y_test = torch.tensor(np.load(path('y_test.npy'))).long()
 
+    y_test = torch.tensor(np.load(path("y_test.npy"))).long()
 
     ds_val = torch.utils.data.TensorDataset(x_val, y_val)
-    ds_val = torch.utils.data.DataLoader(ds_val, batch_size=config['batch_size'], shuffle=True)
+    ds_val = torch.utils.data.DataLoader(ds_val, batch_size=config["batch_size"], shuffle=True)
 
     ds_test = torch.utils.data.TensorDataset(x_test, y_test)
-    ds_test = torch.utils.data.DataLoader(ds_test, batch_size=config['batch_size'], shuffle=True)
+    ds_test = torch.utils.data.DataLoader(ds_test, batch_size=config["batch_size"], shuffle=True)
 
     # Create model
     net = FlowerNet(config, (3, 16, 16), 17).to(device)
 
     # Train
-    optimizer = torch.optim.Adam(net.parameters(), lr=config['lr_init'])
+    optimizer = torch.optim.Adam(net.parameters(), lr=config["lr_init"])
     criterion = torch.nn.CrossEntropyLoss()
 
     t = tqdm.tqdm(total=budget)
@@ -180,46 +178,51 @@ def evaluate_network(config, budget=None):
     val_acc1, val_acc3 = net.eval_fn(ds_val, device)
     tst_acc1, tst_acc3 = net.eval_fn(ds_test, device)
 
-    t.set_postfix(
-        train_acc=acc,
-        val_acc=val_acc1,
-        tst_acc=tst_acc1,
-        len=np.log10(num_params))
+    t.set_postfix(train_acc=acc, val_acc=val_acc1, tst_acc=tst_acc1, len=np.log10(num_params))
     t.close()
 
     return {
-        'val_acc_1': (-100.0 * val_acc1, 0.0),
-        'val_acc_3': (-100.0 * val_acc3, 0.0),
-        'tst_acc_1': (-100.0 * tst_acc1, 0.0),
-        'tst_acc_3': (-100.0 * tst_acc3, 0.0),
-        'num_params': (np.log10(num_params), 0.0),        
+        "val_acc_1": (-100.0 * val_acc1, 0.0),
+        "val_acc_3": (-100.0 * val_acc3, 0.0),
+        "tst_acc_1": (-100.0 * tst_acc1, 0.0),
+        "tst_acc_3": (-100.0 * tst_acc3, 0.0),
+        "num_params": (np.log10(num_params), 0.0),
     }
-
 
 
 def extract_num_parameters(config):
     total = 0
 
-    s = (config['kernel_size'] * config['kernel_size'] * 3 + 1) * config['n_conv_0'] + config['batch_norm'] * config['n_conv_0'] * 2
+    s = (config["kernel_size"] * config["kernel_size"] * 3 + 1) * config["n_conv_0"] + config["batch_norm"] * config[
+        "n_conv_0"
+    ] * 2
     total += s
-    s = ((config['kernel_size'] * config['kernel_size'] * config['n_conv_0'] + 1) * config[
-        'n_conv_1']) + config['batch_norm'] * config['n_conv_1'] * 2 if config['n_conv_l'] > 1 else 0
+    s = (
+        ((config["kernel_size"] * config["kernel_size"] * config["n_conv_0"] + 1) * config["n_conv_1"])
+        + config["batch_norm"] * config["n_conv_1"] * 2
+        if config["n_conv_l"] > 1
+        else 0
+    )
     # print(s)
     total += s
-    s = ((config['kernel_size'] * config['kernel_size'] * config['n_conv_1'] + 1) * config[
-        'n_conv_2']) + config['batch_norm'] * config['n_conv_2'] * 2 if config['n_conv_l'] > 2 else 0
+    s = (
+        ((config["kernel_size"] * config["kernel_size"] * config["n_conv_1"] + 1) * config["n_conv_2"])
+        + config["batch_norm"] * config["n_conv_2"] * 2
+        if config["n_conv_l"] > 2
+        else 0
+    )
     total += s
-    after_conv = {1: 64, 2: 16, 3: 4}[config['n_conv_l']] if not config['global_avg_pooling'] else 1
-    after_conv *= config['n_conv_' + str(config['n_conv_l'] - 1)]
+    after_conv = {1: 64, 2: 16, 3: 4}[config["n_conv_l"]] if not config["global_avg_pooling"] else 1
+    after_conv *= config["n_conv_" + str(config["n_conv_l"] - 1)]
 
-    s = config['n_fc_0'] * after_conv + config['n_fc_0']
+    s = config["n_fc_0"] * after_conv + config["n_fc_0"]
     total += s
-    s = (config['n_fc_1'] * config['n_fc_0'] + config['n_fc_1']) if config['n_fc_l'] > 1 else 0
+    s = (config["n_fc_1"] * config["n_fc_0"] + config["n_fc_1"]) if config["n_fc_l"] > 1 else 0
     total += s
-    s = (config['n_fc_2'] * config['n_fc_1'] + config['n_fc_2']) if config['n_fc_l'] > 2 else 0
+    s = (config["n_fc_2"] * config["n_fc_1"] + config["n_fc_2"]) if config["n_fc_l"] > 2 else 0
     total += s
 
-    s = 10 * config['n_fc_' + str(config['n_fc_l'] - 1)] + 10
+    s = 10 * config["n_fc_" + str(config["n_fc_l"] - 1)] + 10
 
     # print(s)
     total += s

@@ -11,8 +11,8 @@ from ax import OptimizationConfig
 from ax.core.simple_experiment import TEvaluationFunction
 from ax.core.simple_experiment import unimplemented_evaluation_function
 
-class MultiObjectiveSimpleExperiment(SimpleExperiment):
 
+class MultiObjectiveSimpleExperiment(SimpleExperiment):
     def __init__(
         self,
         search_space: SearchSpace,
@@ -28,7 +28,7 @@ class MultiObjectiveSimpleExperiment(SimpleExperiment):
             name=name,
             evaluation_function=eval_function,
             status_quo=status_quo,
-            properties=properties
+            properties=properties,
         )
 
         self.optimization_config = optimization_config
@@ -39,10 +39,10 @@ class MultiObjectiveSimpleExperiment(SimpleExperiment):
 
 
 def save_experiment(experiment: Experiment, filename: str):
-    with open(filename, 'wb') as file:
+    with open(filename, "wb") as file:
         pickle.dump(experiment, file)
 
 
 def load_experiment(filename: str):
-    with open(filename, 'rb') as file:
+    with open(filename, "rb") as file:
         return pickle.load(file)

@@ -13,39 +13,34 @@ from baselines import save_experiment
 
 
 def get_datasets(path):
-    x_train = torch.tensor(np.load(path('x_train.npy'))).float()
+    x_train = torch.tensor(np.load(path("x_train.npy"))).float()
     x_train = x_train.permute(0, 3, 1, 2)
-    y_train = torch.tensor(np.load(path('y_train.npy'))).long()
+    y_train = torch.tensor(np.load(path("y_train.npy"))).long()
 
     ds_train = torch.utils.data.TensorDataset(x_train, y_train)
 
-    x_val = torch.tensor(np.load(path('x_val.npy'))).float()
+    x_val = torch.tensor(np.load(path("x_val.npy"))).float()
     x_val = x_val.permute(0, 3, 1, 2)
-    y_val = torch.tensor(np.load(path('y_val.npy'))).long()
+    y_val = torch.tensor(np.load(path("y_val.npy"))).long()
 
     ds_val = torch.utils.data.TensorDataset(x_val, y_val)
 
-
-    x_test = torch.tensor(np.load(path('x_test.npy'))).float()
+    x_test = torch.tensor(np.load(path("x_test.npy"))).float()
     x_test = x_test.permute(0, 3, 1, 2)
-    y_test = torch.tensor(np.load(path('y_test.npy'))).long()
+    y_test = torch.tensor(np.load(path("y_test.npy"))).long()
 
     ds_test = torch.utils.data.TensorDataset(x_test, y_test)
 
     return ds_train, ds_val, ds_test
 
 
-if __name__ == '__main__':
-
+if __name__ == "__main__":
     # Parameters Flowers
     input_shape = (3, 16, 16)
     num_classes = 17
     budget = 24 * 3600
-    path = lambda x: str(
-        pathlib.Path(flowers.__file__).
-        parent.absolute().joinpath('data').joinpath(x)
-    )
-    experiment = get_flowers('BNC')
+    path = lambda x: str(pathlib.Path(flowers.__file__).parent.absolute().joinpath("data").joinpath(x))
+    experiment = get_flowers("BNC")
 
     # Parameters Fashion
     # input_shape = (1, 28, 28)
@@ -57,13 +52,12 @@ if __name__ == '__main__':
     # )
     # experiment = get_fashion('BNC')
 
-
     ################
     #### MOBOHB ####
     ################
     # Run a full optimization:
     ds_train, ds_val, ds_test = get_datasets(path)
-    work_dir = os.path.join('bulkandcutoutput', f"{str(uuid.uuid4())}")
+    work_dir = os.path.join("bulkandcutoutput", f"{str(uuid.uuid4())}")
     evolution = bnc.Evolution(
         experiment,
         input_shape=input_shape,
@@ -73,7 +67,7 @@ if __name__ == '__main__':
         valid_dataset=ds_val,
         test_dataset=ds_test,
         debugging=False,
-        )
+    )
     evolution.run(time_budget=budget)
 
-    save_experiment(experiment, f'{experiment.name}.pickle')
+    save_experiment(experiment, f"{experiment.name}.pickle")

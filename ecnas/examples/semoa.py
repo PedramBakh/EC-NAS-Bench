@@ -6,8 +6,7 @@ from baselines.problems import get_ecnas
 from tqdm import tqdm
 import numpy as np
 
-if __name__ == '__main__':
-
+if __name__ == "__main__":
     num_nodes = 7
     ops_choices = ["conv3x3-bn-relu", "conv1x1-bn-relu", "maxpool3x3"]
 
@@ -22,7 +21,7 @@ if __name__ == '__main__':
     for run in tqdm(range(trials)):
         np.random.seed(run)
         search_space = ecnasSearchSpace(num_nodes, ops_choices)
-        experiment = get_ecnas(num_nodes, ops_choices, 'SEMOA')
+        experiment = get_ecnas(num_nodes, ops_choices, "SEMOA")
 
         ea = SEMOA(
             search_space,
@@ -34,6 +33,5 @@ if __name__ == '__main__':
         )
         ea.optimize()
 
-        print(experiment.fetch_data().df)
         res = experiment.fetch_data().df
-        save_experiment(res, f'experiments/semoa/{num_nodes}v_{experiment.name}_{run}.pickle')
+        save_experiment(res, f"experiments/semoa/{num_nodes}v_{experiment.name}_{run}.pickle")

@@ -1,8 +1,10 @@
-# From https://towardsdatascience.com/how-to-create-and-visualize-complex-radar-charts-f7764d0f3652
+# This is a modified version of the original code from the following link:
+# https://towardsdatascience.com/how-to-create-and-visualize-complex-radar-charts-f7764d0f3652
+
+# The original code was written by:
+# https://towardsdatascience.com/@pranavrajpurkar
 
 import numpy as np
-import textwrap
-
 
 class ComplexRadar:
     """
@@ -26,15 +28,15 @@ class ComplexRadar:
     """
 
     def __init__(self, fig, variables, ranges, n_ring_levels=5, show_scales=True, format_cfg=None):
-
         # Default formatting
+        self.fig = fig
         self.format_cfg = {
             # Axes
             # https://matplotlib.org/stable/api/figure_api.html
             "axes_args": {},
             # Tick labels on the scales
             # https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.rgrids.html
-            "rgrid_tick_lbls_args": {"fontsize": 8},
+            "rgrid_tick_lbls_args": {"fontsize": 8, "fontweight": "bold"},
             # Radial (circle) lines
             # https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.grid.html
             "rad_ln_args": {},
@@ -47,7 +49,7 @@ class ComplexRadar:
             "theta_tick_lbls": {"va": "top", "ha": "center"},
             "theta_tick_lbls_txt_wrap": 15,
             "theta_tick_lbls_brk_lng_wrds": False,
-            "theta_tick_lbls_pad": 25,
+            "theta_tick_lbls_pad": 5,
             # Outer ring
             # https://matplotlib.org/stable/api/spines_api.html
             "outer_ring": {"visible": True, "color": "#d6d6d6"},
@@ -74,23 +76,40 @@ class ComplexRadar:
 
         # Writing the ranges on each axes
         for i, ax in enumerate(axes):
-
             # Here we do the trick by repeating the first iteration
             j = 0 if (i == 0 or i == 1) else i - 1
             ax.set_ylim(*ranges[j])
 
             # Set endpoint to True if you like to have values right before the last circle
             grid = np.linspace(*ranges[j], num=n_ring_levels, endpoint=self.format_cfg["incl_endpoint"])
+
+            # Gridlines along y-axis (radial gridlines)
             gridlabel = [
-                f"{x:.2f}".format(round(x, 0)) if ranges[j][1] < 3 * 1e6 else f"{x/1e6:.2f}".format(round(x, 0))
-                for x in grid
+                "" if x == 0 else r"\textbf{" + f"{x:.2f}" + "}"
+                for x in np.linspace(*ranges[j], num=n_ring_levels, endpoint=self.format_cfg["incl_endpoint"])
             ]
+
             gridlabel[0] = ""  # remove values from the center
             lines, labels = ax.set_rgrids(
                 grid, labels=gridlabel, angle=angles[j], **self.format_cfg["rgrid_tick_lbls_args"]
             )
 
-            ax.set_ylim(*ranges[j])
+            # Adjust radial grid labels' horizontal alignment
+            for line, label, angle in zip(lines, labels, [angles[j]] * len(lines)):
+                if angle == angles[0]:  # First label on the x-axis
+                    label.set_verticalalignment("center_baseline")
+                    label.set_verticalalignment("top")
+                    label.set_horizontalalignment("center")
+                elif angle == angles[1]:  # First label on the y-axis
+                    label.set_horizontalalignment("right")
+                elif angle == angles[2]:  # First label on the x-axis
+                    label.set_horizontalalignment("center")
+                    label.set_verticalalignment("bottom")
+                else:
+                    label.set_horizontalalignment("center")
+                    label.set_horizontalalignment("left")
+
+            # ax.set_ylim(*ranges[j])
             ax.spines["polar"].set_visible(False)
             ax.grid(visible=False)
 
@@ -125,17 +144,17 @@ class ComplexRadar:
         l, text = self.ax.set_thetagrids(angles, labels=variables)
 
         # Beautify them
-        labels = [t.get_text() for t in self.ax.get_xticklabels()]
-        labels = [
-            "\n".join(
-                textwrap.wrap(
-                    l,
-                    self.format_cfg["theta_tick_lbls_txt_wrap"],
-                    break_long_words=self.format_cfg["theta_tick_lbls_brk_lng_wrds"],
-                )
-            )
-            for l in labels
-        ]
+        # labels = [t.get_text() for t in self.ax.get_xticklabels()]
+        # labels = [
+        #     "\n".join(
+        #         textwrap.wrap(
+        #             l,
+        #             self.format_cfg["theta_tick_lbls_txt_wrap"],
+        #             break_long_words=self.format_cfg["theta_tick_lbls_brk_lng_wrds"],
+        #         )
+        #     )
+        #     for l in labels
+        # ]
         labels = ["$T$(s)", "$P_{v}$", "$E$(kWh)", r"$|\theta|$(M)"]
         self.ax.set_xticklabels(labels, **self.format_cfg["theta_tick_lbls"])
 
@@ -148,8 +167,6 @@ class ComplexRadar:
                 t.set_ha("center")
             else:
                 t.set_ha("right")
-
-        self.ax.tick_params(axis="both", pad=self.format_cfg["theta_tick_lbls_pad"])
 
     def _scale_data(self, data, ranges):
         """Scales data[1:] to ranges[0]"""
@@ -165,6 +182,7 @@ class ComplexRadar:
     def plot(self, data, *args, **kwargs):
         """Plots a line"""
         sdata = self._scale_data(data, self.ranges)
+        # make ticks inside the lines
         self.ax1.plot(self.angle, np.r_[sdata, sdata[0]], *args, **kwargs)
         self.plot_counter = self.plot_counter + 1
 

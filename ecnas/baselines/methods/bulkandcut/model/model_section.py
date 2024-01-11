@@ -10,7 +10,6 @@ from baselines.methods.bulkandcut import rng, device
 
 
 class ModelSection(torch.nn.Module):
-
     @classmethod
     def NEW(cls, index: int, parameters, in_elements: int, section_type: str):
         if section_type not in ["linear", "conv"]:
@@ -25,11 +24,9 @@ class ModelSection(torch.nn.Module):
         cells = torch.nn.ModuleList([first_cell])
         return ModelSection(cells=cells, last_op=last_op)
 
-    def __init__(self,
-                 cells: "torch.nn.ModuleList",
-                 last_op: "torch.nn.Module",
-                 skip_cnns: "torch.nn.ModuleList" = None
-                 ):
+    def __init__(
+        self, cells: "torch.nn.ModuleList", last_op: "torch.nn.Module", skip_cnns: "torch.nn.ModuleList" = None
+    ):
         super(ModelSection, self).__init__()
         self.cells = cells
         self.last_op = last_op
@@ -96,7 +93,7 @@ class ModelSection(torch.nn.Module):
             skcnn.adjust_addressing(inserted_cell=sel_cell + 1)
 
         # Stochastically add a skip connection
-        if rng.random() < .7:
+        if rng.random() < 0.7:
             candidates = self._skip_connection_candidates()
             if len(candidates) > 0:
                 chosen = rng.choice(candidates)
@@ -107,7 +104,7 @@ class ModelSection(torch.nn.Module):
             cells=new_cell_set,
             skip_cnns=new_skip_cnns,
             last_op=deepcopy(self.last_op),
-            )
+        )
         return deeper_section
 
     def _skip_connection_candidates(self):
@@ -130,12 +127,12 @@ class ModelSection(torch.nn.Module):
             pruned_cell, out_selected = cell.prune(
                 out_selected=out_selected,
                 amount=amount,
-                )
+            )
             narrower_cells.append(pruned_cell)
 
         narrower_section = ModelSection(
             cells=narrower_cells[::-1],
             skip_cnns=deepcopy(self.skip_cnns),
             last_op=deepcopy(self.last_op),
-            )
+        )
         return narrower_section, out_selected

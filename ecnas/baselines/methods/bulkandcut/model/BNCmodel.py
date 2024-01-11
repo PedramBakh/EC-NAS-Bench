@@ -20,7 +20,6 @@ from baselines.methods.bulkandcut import rng, device
 
 
 class BNCmodel(torch.nn.Module):
-
     @classmethod
     def LOAD(cls, file_path: str) -> "BNCmodel":
         return torch.load(f=file_path).to(device)
@@ -31,8 +30,8 @@ class BNCmodel(torch.nn.Module):
 
         parameters = get_sobol(search_space).gen(1).arms[0].parameters
 
-        n_conv_sections = parameters['n_conv_l']
-        n_linear_sections = parameters['n_fc_l']
+        n_conv_sections = parameters["n_conv_l"]
+        n_linear_sections = parameters["n_fc_l"]
 
         # Convolutional layers
         conv_sections = torch.nn.ModuleList()
@@ -43,11 +42,10 @@ class BNCmodel(torch.nn.Module):
             conv_sections.append(conv_section)
         conv_sections[0].mark_as_first_section()
 
-        #x = torch.autograd.Variable(torch.rand(1, *input_shape))
-        #for conv in conv_sections:
+        # x = torch.autograd.Variable(torch.rand(1, *input_shape))
+        # for conv in conv_sections:
         #    x = conv(x)
-        #n_outputs = x.data.view(1, -1).size(1)
-
+        # n_outputs = x.data.view(1, -1).size(1)
 
         # Fully connected (i.e. linear) layers
         linear_sections = torch.nn.ModuleList()
@@ -66,14 +64,17 @@ class BNCmodel(torch.nn.Module):
             linear_sections=linear_sections,
             head=head,
             input_shape=input_shape,
-            parameters=parameters).to(device)
+            parameters=parameters,
+        ).to(device)
 
-    def __init__(self,
-                 conv_sections: "torch.nn.ModuleList[ModelSection]",
-                 linear_sections: "torch.nn.ModuleList[ModelSection]",
-                 head: "ModelHead",
-                 input_shape: tuple,
-                 parameters: Dict):
+    def __init__(
+        self,
+        conv_sections: "torch.nn.ModuleList[ModelSection]",
+        linear_sections: "torch.nn.ModuleList[ModelSection]",
+        head: "ModelHead",
+        input_shape: tuple,
+        parameters: Dict,
+    ):
         super(BNCmodel, self).__init__()
         self.conv_sections = conv_sections
         self.glob_av_pool = torch.nn.AdaptiveAvgPool2d(output_size=1)
@@ -108,7 +109,7 @@ class BNCmodel(torch.nn.Module):
             device=device,
             verbose=0,
             depth=5,
-            )
+        )
         summary_str = str(model_summary) + "\n\n"
         # Skip connection info:
         summary_str += "Skip connections\n" + "-" * 30 + "\n"
@@ -159,15 +160,15 @@ class BNCmodel(torch.nn.Module):
         new_params = deepcopy(self._parameters_dict)
 
         # There is a p chance of adding a convolutional cell
-        if new_params['n_conv_l'] < 3 and (rng.uniform() < .7 or new_params['n_fc_l'] == 3):
+        if new_params["n_conv_l"] < 3 and (rng.uniform() < 0.7 or new_params["n_fc_l"] == 3):
             sel_section = rng.integers(low=0, high=len(self.conv_sections))
             new_conv_sections[sel_section] = self.conv_sections[sel_section].bulkup()
-            new_params['n_conv_l'] += 1
+            new_params["n_conv_l"] += 1
 
             i = 0
             for sect in new_conv_sections:
                 for cell in sect.cells:
-                    new_params[f'n_conv_{i}'] = cell.out_elements
+                    new_params[f"n_conv_{i}"] = cell.out_elements
                     i += 1
 
         # And a (1-p) chance of adding a linear cell
@@ -175,11 +176,11 @@ class BNCmodel(torch.nn.Module):
             sel_section = rng.integers(low=0, high=len(self.linear_sections))
             new_linear_sections[sel_section] = self.linear_sections[sel_section].bulkup()
 
-            new_params['n_fc_l'] += 1
+            new_params["n_fc_l"] += 1
             i = 0
             for sect in new_linear_sections:
                 for cell in sect.cells:
-                    new_params[f'n_fc_{i}'] = cell.out_elements
+                    new_params[f"n_fc_{i}"] = cell.out_elements
                     i += 1
 
         new_head = self.head.bulkup()  # just returns a copy
@@ -190,44 +191,42 @@ class BNCmodel(torch.nn.Module):
             head=new_head,
             input_shape=self.input_shape,
             parameters=new_params,
-            ).to(device)
+        ).to(device)
 
     def slimdown(self) -> "BNCmodel":
         # Prune head
         new_head, out_selected = self.head.slimdown(
-            amount=rng.triangular(left=.04, right=.06, mode=.05),
-            )
+            amount=rng.triangular(left=0.04, right=0.06, mode=0.05),
+        )
         # Prune linear sections
         new_linear_sections = torch.nn.ModuleList()
         for lin_sec in self.linear_sections[::-1]:
             new_linear_section, out_selected = lin_sec.slimdown(
                 out_selected=out_selected,
-                amount=rng.triangular(left=.065, right=.085, mode=.075),
-                )
+                amount=rng.triangular(left=0.065, right=0.085, mode=0.075),
+            )
             new_linear_sections.append(new_linear_section)
-
 
         # Prune convolutional sections
         new_conv_sections = torch.nn.ModuleList()
         for conv_sec in self.conv_sections[::-1]:
             new_conv_section, out_selected = conv_sec.slimdown(
                 out_selected=out_selected,
-                amount=rng.triangular(left=.09, right=.11, mode=.10),
-                )
+                amount=rng.triangular(left=0.09, right=0.11, mode=0.10),
+            )
             new_conv_sections.append(new_conv_section)
 
         new_params = deepcopy(self._parameters_dict)
         i = 0
         for sect in new_conv_sections:
             for cell in sect.cells:
-                new_params[f'n_conv_{i}'] = cell.out_elements
+                new_params[f"n_conv_{i}"] = cell.out_elements
                 i += 1
         i = 0
         for sect in new_linear_sections:
             for cell in sect.cells:
-                new_params[f'n_fc_{i}'] = cell.out_elements
+                new_params[f"n_fc_{i}"] = cell.out_elements
                 i += 1
-
 
         return BNCmodel(
             conv_sections=new_conv_sections[::-1],
@@ -235,21 +234,22 @@ class BNCmodel(torch.nn.Module):
             head=new_head,
             input_shape=self.input_shape,
             parameters=new_params,
-            ).to(device)
+        ).to(device)
 
-    def start_training(self,
-                       n_epochs: int,
-                       train_dataset: "torch.utils.data.Dataset",
-                       valid_dataset: "torch.utils.data.Dataset",
-                       test_dataset: "torch.utils.data.Dataset",
-                       teacher_model: "BNCmodel" = None,
-                       return_all_learning_curvers: bool = False,
-                       ):
+    def start_training(
+        self,
+        n_epochs: int,
+        train_dataset: "torch.utils.data.Dataset",
+        valid_dataset: "torch.utils.data.Dataset",
+        test_dataset: "torch.utils.data.Dataset",
+        teacher_model: "BNCmodel" = None,
+        return_all_learning_curvers: bool = False,
+    ):
         # Batch size is automatically tuned according to the available hardware.
         # The goal is to have the batch size as big as possible. First we try to fit the whole
         # dataset inside a two batches. If we run out of memory, we successively halve
         # the batch size until it fits the memory.
-        batch_size = len(train_dataset) / 8.
+        batch_size = len(train_dataset) / 8.0
 
         while True:
             # Create Dataloaders:
@@ -257,12 +257,12 @@ class BNCmodel(torch.nn.Module):
                 dataset=train_dataset,
                 batch_size=int(ceil(batch_size)),
                 shuffle=True,
-                )
+            )
             valid_data_loader = torch.utils.data.DataLoader(
                 dataset=valid_dataset,
                 batch_size=int(ceil(batch_size)),
                 shuffle=False,
-                )
+            )
             test_data_loader = torch.utils.data.DataLoader(
                 dataset=test_dataset,
                 batch_size=int(ceil(batch_size)),
@@ -281,11 +281,12 @@ class BNCmodel(torch.nn.Module):
                 return learning_curves
             # Exception handling adapted from FairSeq (https://github.com/pytorch/fairseq/)
             except RuntimeError as exc:
-                batch_size /= 2.
+                batch_size /= 2.0
                 if "out of memory" in str(exc) and batch_size >= 1:
-                    print("WARNING: ran out of memory, trying again with smaller batch size:",
-                          int(batch_size),
-                          )
+                    print(
+                        "WARNING: ran out of memory, trying again with smaller batch size:",
+                        int(batch_size),
+                    )
                     for p in self.parameters():
                         if p.grad is not None:
                             del p.grad
@@ -293,14 +294,15 @@ class BNCmodel(torch.nn.Module):
                 else:
                     raise exc
 
-    def _train_n_epochs(self,
-                        n_epochs: int,
-                        train_data_loader: "torch.utils.data.DataLoader",
-                        valid_data_loader: "torch.utils.data.DataLoader",
-                        test_data_loader: "torch.utils.data.DataLoader",
-                        teacher_model: "BNCmodel",
-                        return_all_learning_curvers: bool,
-                        ):
+    def _train_n_epochs(
+        self,
+        n_epochs: int,
+        train_data_loader: "torch.utils.data.DataLoader",
+        valid_data_loader: "torch.utils.data.DataLoader",
+        test_data_loader: "torch.utils.data.DataLoader",
+        teacher_model: "BNCmodel",
+        return_all_learning_curvers: bool,
+    ):
         learning_curves = defaultdict(list)
 
         # If a parent model was provided, its logits will be used as targets (knowledge
@@ -312,7 +314,7 @@ class BNCmodel(torch.nn.Module):
         initial_loss, _, _ = self.evaluate(
             data_loader=valid_data_loader,
             split_name="validation",
-            )
+        )
         learning_curves["validation_loss"].append(initial_loss)
         print("\n")
 
@@ -321,7 +323,7 @@ class BNCmodel(torch.nn.Module):
                 train_data_loader=train_data_loader,
                 teacher_model=teacher_model,
                 loss_function=loss_func,
-                )
+            )
 
             # Register perfomance of the current epoch:
             learning_curves["train_loss"].append(train_loss)
@@ -334,11 +336,11 @@ class BNCmodel(torch.nn.Module):
                 train_loss_at_eval, train_accuracy, _ = self.evaluate(
                     data_loader=train_data_loader,
                     split_name="training",
-                    )
+                )
                 valid_loss, valid_accuracy_1, valid_accuracy_3 = self.evaluate(
                     data_loader=valid_data_loader,
                     split_name="validation",
-                    )
+                )
                 test_loss, test_accuracy_1, test_accuracy_3 = self.evaluate(
                     data_loader=test_data_loader,
                     split_name="test",
@@ -441,5 +443,5 @@ class BNCmodel(torch.nn.Module):
         accuracies = []
         for k in topk:
             correct_k = correct[:k].reshape(-1).float().sum(0)
-            accuracies.append(correct_k.mul_(100.0/batch_size).item())
+            accuracies.append(correct_k.mul_(100.0 / batch_size).item())
         return accuracies

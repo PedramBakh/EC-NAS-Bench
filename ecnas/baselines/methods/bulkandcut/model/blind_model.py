@@ -11,11 +11,10 @@ from baselines.methods.bulkandcut import device
 
 
 class BlindModel(torch.nn.Module):
-
     def __init__(self, n_classes: int, super_stupid: bool = False):
         super(BlindModel, self).__init__()
         n_pars = 1 if super_stupid else n_classes
-        self.bias = torch.nn.Parameter(data=torch.rand(n_pars) * 1E-6, requires_grad=True)
+        self.bias = torch.nn.Parameter(data=torch.rand(n_pars) * 1e-6, requires_grad=True)
         self.loss_func_CE_hard = torch.nn.CrossEntropyLoss()
         self.optimizer = torch.optim.AdamW(params=self.parameters(), lr=2.244958736283895e-05)
         self.n_classes = n_classes
@@ -32,7 +31,7 @@ class BlindModel(torch.nn.Module):
             input_data=(1,),
             device=device,
             verbose=0,
-            )
+        )
         return str(model_stats)
 
     def save(self, file_path):
@@ -44,10 +43,11 @@ class BlindModel(torch.nn.Module):
         x = self.bias * ones  # The blind model doesn't care about the input
         return x
 
-    def start_training(self,
-                       train_dataset: "torch.utils.data.Dataset",
-                       valid_dataset: "torch.utils.data.Dataset",
-                       ):
+    def start_training(
+        self,
+        train_dataset: "torch.utils.data.Dataset",
+        valid_dataset: "torch.utils.data.Dataset",
+    ):
         learning_curves = defaultdict(list)
 
         # Create Dataloaders:
@@ -55,19 +55,19 @@ class BlindModel(torch.nn.Module):
             dataset=train_dataset,
             batch_size=282,
             shuffle=True,
-            )
+        )
         valid_data_loader = torch.utils.data.DataLoader(
             dataset=valid_dataset,
             batch_size=282,
             shuffle=False,
-            )
+        )
 
         # Pre-training validation loss:
         print("Pre-training evaluation:")
         initial_loss, _ = self.evaluate(
             data_loader=valid_data_loader,
             split_name="validation",
-            )
+        )
         learning_curves["validation_loss"].append(initial_loss)
 
         train_batch_losses = self._train_one_epoch(train_data_loader=train_data_loader)
@@ -142,5 +142,5 @@ class BlindModel(torch.nn.Module):
         accuracies = []
         for k in topk:
             correct_k = correct[:k].reshape(-1).float().sum(0)
-            accuracies.append(correct_k.mul_(100.0/batch_size).item())
+            accuracies.append(correct_k.mul_(100.0 / batch_size).item())
         return accuracies

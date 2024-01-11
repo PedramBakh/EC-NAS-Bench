@@ -13,6 +13,7 @@ def get_ranges(benchmark, budget):
 
     for key in all_lookup_keys:
         fixed_stat, computed_stat = benchmark.get_metrics_from_hash(key)
+        print(computed_stat[budget])
         computed_stat = computed_stat[budget][0]
 
         if computed_stat["final_validation_accuracy"] < min_acc:

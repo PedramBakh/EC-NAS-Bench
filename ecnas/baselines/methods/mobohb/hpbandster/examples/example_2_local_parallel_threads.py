@@ -10,6 +10,7 @@ In that case, all workers can truely work in parallel.
 
 """
 import logging
+
 logging.basicConfig(level=logging.WARNING)
 
 import argparse
@@ -21,18 +22,17 @@ from hpbandster.optimizers import BOHB as BOHB
 from hpbandster.examples.commons import MyWorker
 
 
+parser = argparse.ArgumentParser(description="Example 1 - sequential and local execution.")
+parser.add_argument("--min_budget", type=float, help="Minimum budget used during the optimization.", default=9)
+parser.add_argument("--max_budget", type=float, help="Maximum budget used during the optimization.", default=243)
+parser.add_argument("--n_iterations", type=int, help="Number of iterations performed by the optimizer", default=4)
+parser.add_argument("--n_workers", type=int, help="Number of workers to run in parallel.", default=2)
 
-parser = argparse.ArgumentParser(description='Example 1 - sequential and local execution.')
-parser.add_argument('--min_budget',   type=float, help='Minimum budget used during the optimization.',    default=9)
-parser.add_argument('--max_budget',   type=float, help='Maximum budget used during the optimization.',    default=243)
-parser.add_argument('--n_iterations', type=int,   help='Number of iterations performed by the optimizer', default=4)
-parser.add_argument('--n_workers', type=int,   help='Number of workers to run in parallel.', default=2)
-
-args=parser.parse_args()
+args = parser.parse_args()
 
 
 # Step 1: Start a nameserver (see example_1)
-NS = hpns.NameServer(run_id='example2', host='127.0.0.1', port=None)
+NS = hpns.NameServer(run_id="example2", host="127.0.0.1", port=None)
 NS.start()
 
 # Step 2: Start the workers
@@ -41,11 +41,11 @@ NS.start()
 # take a bit of time. Note the additional id argument that helps separating the
 # individual workers. This is necessary because every worker uses its processes
 # ID which is the same for all threads here.
-workers=[]
+workers = []
 for i in range(args.n_workers):
-	w = MyWorker(sleep_interval = 0.5, nameserver='127.0.0.1',run_id='example2', id=i)
-	w.run(background=True)
-	workers.append(w)
+    w = MyWorker(sleep_interval=0.5, nameserver="127.0.0.1", run_id="example2", id=i)
+    w.run(background=True)
+    workers.append(w)
 
 # Step 3: Run an optimizer
 # Now we can create an optimizer object and start the run.
@@ -53,10 +53,7 @@ for i in range(args.n_workers):
 # for all workers to start. This is not mandatory, and workers can be added
 # at any time, but if the timing of the run is essential, this can be used to
 # synchronize all workers right at the start.
-bohb = BOHB(  configspace = w.get_configspace(),
-              run_id = 'example2',
-              min_budget=args.min_budget, max_budget=args.max_budget
-           )
+bohb = BOHB(configspace=w.get_configspace(), run_id="example2", min_budget=args.min_budget, max_budget=args.max_budget)
 res = bohb.run(n_iterations=args.n_iterations, min_n_workers=args.n_workers)
 
 # Step 4: Shutdown
@@ -74,9 +71,18 @@ incumbent = res.get_incumbent_id()
 
 all_runs = res.get_all_runs()
 
-print('Best found configuration:', id2config[incumbent]['config'])
-print('A total of %i unique configurations where sampled.' % len(id2config.keys()))
-print('A total of %i runs where executed.' % len(res.get_all_runs()))
-print('Total budget corresponds to %.1f full function evaluations.'%(sum([r.budget for r in all_runs])/args.max_budget))
-print('Total budget corresponds to %.1f full function evaluations.'%(sum([r.budget for r in all_runs])/args.max_budget))
-print('The run took  %.1f seconds to complete.'%(all_runs[-1].time_stamps['finished'] - all_runs[0].time_stamps['started']))
+print("Best found configuration:", id2config[incumbent]["config"])
+print("A total of %i unique configurations where sampled." % len(id2config.keys()))
+print("A total of %i runs where executed." % len(res.get_all_runs()))
+print(
+    "Total budget corresponds to %.1f full function evaluations."
+    % (sum([r.budget for r in all_runs]) / args.max_budget)
+)
+print(
+    "Total budget corresponds to %.1f full function evaluations."
+    % (sum([r.budget for r in all_runs]) / args.max_budget)
+)
+print(
+    "The run took  %.1f seconds to complete."
+    % (all_runs[-1].time_stamps["finished"] - all_runs[0].time_stamps["started"])
+)

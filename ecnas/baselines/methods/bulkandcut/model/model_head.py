@@ -4,7 +4,6 @@ import torch
 
 
 class ModelHead(torch.nn.Module):
-
     @classmethod
     def NEW(cls, in_elements, out_elements):
         linear_layer = torch.nn.Linear(
@@ -33,8 +32,7 @@ class ModelHead(torch.nn.Module):
 
     @torch.no_grad()
     def slimdown(self, amount: float):
-
-        elements_to_prune = int(amount * self.in_elements) 
+        elements_to_prune = int(amount * self.in_elements)
         num_in_elements = self.in_elements - elements_to_prune
         new_layer = torch.nn.Linear(
             in_features=num_in_elements,
@@ -46,11 +44,11 @@ class ModelHead(torch.nn.Module):
             input=torch.abs(self.layer.weight),
             dim=0,
         )
-        candidates = torch.argsort(w_l1norm)[:2 * elements_to_prune]
+        candidates = torch.argsort(w_l1norm)[: 2 * elements_to_prune]
         idx_to_prune = torch.randperm(candidates.size(0))[:elements_to_prune]
         in_selected = torch.arange(self.in_elements)
         for kill in idx_to_prune:
-            in_selected = torch.cat((in_selected[:kill], in_selected[kill + 1:]))
+            in_selected = torch.cat((in_selected[:kill], in_selected[kill + 1 :]))
 
         weight = deepcopy(self.layer.weight.data[:, in_selected])
         bias = deepcopy(self.layer.bias)

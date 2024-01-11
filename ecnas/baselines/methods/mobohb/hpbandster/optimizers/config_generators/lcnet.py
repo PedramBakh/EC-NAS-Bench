@@ -18,13 +18,7 @@ def smoothing(lc):
 
 
 class LCNetWrapper(base_config_generator):
-    def __init__(self,
-                 configspace,
-                 max_budget,
-                 n_points=2000,
-                 delta=1.0,
-                 n_candidates=1024,
-                 **kwargs):
+    def __init__(self, configspace, max_budget, n_points=2000, delta=1.0, n_candidates=1024, **kwargs):
         """
         Parameters:
         -----------
@@ -41,14 +35,16 @@ class LCNetWrapper(base_config_generator):
         super(LCNetWrapper, self).__init__(**kwargs)
 
         self.n_candidates = n_candidates
-        self.model = LCNet(sampling_method="sghmc",
-                           l_rate=np.sqrt(1e-4),
-                           mdecay=.05,
-                           n_nets=100,
-                           burn_in=500,
-                           n_iters=3000,
-                           get_net=get_lc_net,
-                           precondition=True)
+        self.model = LCNet(
+            sampling_method="sghmc",
+            l_rate=np.sqrt(1e-4),
+            mdecay=0.05,
+            n_nets=100,
+            burn_in=500,
+            n_iters=3000,
+            get_net=get_lc_net,
+            precondition=True,
+        )
 
         self.config_space = configspace
         self.max_budget = max_budget
@@ -62,26 +58,27 @@ class LCNetWrapper(base_config_generator):
 
     def get_config(self, budget):
         """
-            function to sample a new configuration
+        function to sample a new configuration
 
-            This function is called inside Hyperband to query a new configuration
+        This function is called inside Hyperband to query a new configuration
 
 
-            Parameters:
-            -----------
-            budget: float
-                the budget for which this configuration is scheduled
+        Parameters:
+        -----------
+        budget: float
+            the budget for which this configuration is scheduled
 
-            returns: config
-                should return a valid configuration
+        returns: config
+            should return a valid configuration
 
         """
         self.lock.acquire()
         if not self.is_trained:
             c = self.config_space.sample_configuration().get_array()
         else:
-            candidates = np.array([self.config_space.sample_configuration().get_array()
-                                   for _ in range(self.n_candidates)])
+            candidates = np.array(
+                [self.config_space.sample_configuration().get_array() for _ in range(self.n_candidates)]
+            )
 
             # We are only interested on the asymptotic value
             projected_candidates = np.concatenate((candidates, np.ones([self.n_candidates, 1])), axis=1)
@@ -104,26 +101,26 @@ class LCNetWrapper(base_config_generator):
 
     def new_result(self, job):
         """
-            function to register finished runs
+        function to register finished runs
 
-            Every time a run has finished, this function should be called
-            to register it with the result logger. If overwritten, make
-            sure to call this method from the base class to ensure proper
-            logging.
+        Every time a run has finished, this function should be called
+        to register it with the result logger. If overwritten, make
+        sure to call this method from the base class to ensure proper
+        logging.
 
 
-            Parameters:
-            -----------
-            job_id: dict
-                a dictionary containing all the info about the run
-            job_result: dict
-                contains all the results of the job, i.e. it's a dict with
-                the keys 'loss' and 'info'
+        Parameters:
+        -----------
+        job_id: dict
+            a dictionary containing all the info about the run
+        job_result: dict
+            contains all the results of the job, i.e. it's a dict with
+            the keys 'loss' and 'info'
 
         """
         super().new_result(job)
 
-        conf = ConfigSpace.Configuration(self.config_space, job.kwargs['config']).get_array()
+        conf = ConfigSpace.Configuration(self.config_space, job.kwargs["config"]).get_array()
 
         epochs = len(job.result["info"]["learning_curve"])
         budget = int(job.kwargs["budget"])
@@ -147,7 +144,6 @@ class LCNetWrapper(base_config_generator):
             self.train_targets = np.append(self.train_targets, lc_new, axis=0)
 
         if self.counter >= self.n_points:
-
             self.lock.acquire()
             y_min = np.min(self.train_targets)
             y_max = np.max(self.train_targets)

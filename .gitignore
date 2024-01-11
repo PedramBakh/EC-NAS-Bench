@@ -34,5 +34,15 @@ coverage.xml
 # Sphinx documentation
 docs/_build/
 
-# Large data files (tracked with Git LFS)
-# ecnas/ecnas/utils/data/tabular_benchmarks/energy_7V9E_surrogate.tfrecord
+ecnas/experiments/attainment_curve.py
+ecnas/experiments/dataset.py
+ecnas/experiments/hw.py
+ecnas/experiments/pareto_n_radar.py
+ecnas/experiments/scatter.py
+
+ecnas/utils/data/tabular_benchmarks/nasbench_full.tfrecord
+
+.idea/misc.xml
+ecnas/.idea/
+
+

@@ -7,7 +7,7 @@ from google.protobuf import json_format
 import base64
 import copy
 import json
-
+from tqdm import tqdm
 from ecnas.api.benchmark import Benchmark
 from ecnas.utils.data.get_benchmarks import (
     get_nasbench101_full,
@@ -46,7 +46,7 @@ class InconsistentModelRepeatError(Exception):
 
 
 class NASBench101(Benchmark):
-    def __init__(self, variant="full", dataset_file=None, seed=None):
+    def __init__(self, variant=None, dataset_file=None, seed=None):
         if variant == "full":
             get_nasbench101_full()
             self.dataset_file = os.path.join(TABULAR_BENCHMARKS, "nasbench_full.tfrecord")
@@ -56,6 +56,10 @@ class NASBench101(Benchmark):
             get_nasbench101_only108()
             self.dataset_file = os.path.join(TABULAR_BENCHMARKS, "nasbench_only108.tfrecord")
             self._name = "NASBench101 (nasbench_only108.tfrecord)"
+            super().__init__(dataset_file=self.dataset_file, seed=seed)
+        else:
+            self.dataset_file = dataset_file
+            self._name = "NASBench101 (nasbench_full.tfrecord)"
             super().__init__(dataset_file=self.dataset_file, seed=seed)
 
     def _setup(self):
@@ -258,7 +262,6 @@ class ECNASBench(Benchmark):
         super().__init__(dataset_file=self.dataset_file, seed=seed)
 
     def _setup(self):
-
         # Store statistic of dataset
         self._num_datapoints = 0
         self._unique_models = 0
@@ -286,7 +289,7 @@ class ECNASBench(Benchmark):
 
         self._max_edges = set()
 
-        for serialized_row in tf.compat.v1.python_io.tf_record_iterator(self.dataset_file):
+        for serialized_row in tqdm(tf.compat.v1.python_io.tf_record_iterator(self.dataset_file)):
             # Parse the data from the data file.
             (
                 module_hash,
@@ -368,14 +371,14 @@ class ECNASBench(Benchmark):
             self._num_datapoints += 1
 
             # Uncomment for actual training costs
-            if epochs == 4:
-                self._aggregate_training_time_days += final_evaluation.training_time / seconds_in_day
-                self._aggregate_energy += final_evaluation.energy
-                self._aggregate_co2 += final_evaluation.co2eq
+            # if epochs == 4:
+            #     self._aggregate_training_time_days += final_evaluation.training_time / seconds_in_day
+            #     self._aggregate_energy += final_evaluation.energy
+            #     self._aggregate_co2 += final_evaluation.co2eq
 
-            # self._aggregate_training_time_days += data_point["final_training_time"] / seconds_in_day
-            # self._aggregate_energy += data_point["energy (kWh)"]
-            # self._aggregate_co2 += data_point["co2eq (g)"]
+            self._aggregate_training_time_days += data_point["final_training_time"] / seconds_in_day
+            self._aggregate_energy += data_point["energy (kWh)"]
+            self._aggregate_co2 += data_point["co2eq (g)"]
 
         self._module_vertices = dict(Counter(self._module_vertices))
         self._max_edges = max(self._max_edges)
