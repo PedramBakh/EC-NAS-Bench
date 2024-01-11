@@ -25,11 +25,11 @@ This suggests the feasibility of identifying energy-lean architectures without c
 ## Citation
 Kindly use the following BibTeX entry if you use the code in your work.
 ```
-@article{bakhtiarifard2023ecnasbench,
- 	title={Energy Consumption-Aware Tabular Benchmarks for Neural Architecture Search},
+@proceedings{bakhtiarifard2023ecnasbench,
+ 	title={EC-NAS:Energy Consumption-Aware Tabular Benchmarks for Neural Architecture Search},
 	author={Pedram Bakhtiarifard and Christian Igel and Raghavendra Selvan},
- 	journal={arXiv preprint arXiv:2023.2210.06015},
-	year={2023}}
+ 	booktitle={International Conference on Acoustics, Speech and Signal Processing (ICASSP)},
+	year={2024}}
 ```
 
 ## Benchmark Overview
