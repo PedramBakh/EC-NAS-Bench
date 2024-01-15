@@ -1,4 +1,5 @@
 # [ICASSP 2024] EC-NAS-Bench
+[![arXiv](https://img.shields.io/badge/arXiv-2210.06015-b31b1b.svg)](https://arxiv.org/abs/2210.06015)
 ![PythonVersion](https://img.shields.io/badge/Made%20with-Python%203.8-1f425f.svg?logo=python)
 ![Activity](https://img.shields.io/github/last-commit/PedramBakh/ec-nas-bench)
 ![License](https://img.shields.io/github/license/PedramBakh/ec-nas-bench)
