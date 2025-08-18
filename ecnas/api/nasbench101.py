@@ -13,8 +13,9 @@ from ecnas.utils.data.get_benchmarks import (
     get_nasbench101_full,
     get_nasbench101_only108,
 )
-from nasbench.lib import config, model_metrics_pb2, model_metrics_energy_pb2
-from nasbench.lib import model_spec as _model_spec
+
+from ecnas.vendors.ec_nasbench.nasbench.lib import config, model_metrics_pb2, model_metrics_energy_pb2
+from ecnas.vendors.ec_nasbench.nasbench.lib import model_spec as _model_spec
 
 import numpy as np
 import tensorflow as tf
@@ -33,7 +34,7 @@ sys.path.append(
     )
 )
 
-TABULAR_BENCHMARKS = os.path.join(os.getcwd(), "ecnas", "utils", "data", "tabular_benchmarks")
+TABULAR_BENCHMARKS = os.path.join(os.getcwd(), "EC-NAS-Bench", "ecnas", "utils", "data", "tabular_benchmarks")
 ModelSpec = _model_spec.ModelSpec
 
 
